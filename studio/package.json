@@ -1,0 +1,21 @@
+{
+  "name": "heige-codex-skin-studio",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Windows XP-era QQ theme for Codex Desktop with a native-theme fallback.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "heige-codex-skin": "src/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "doctor": "node src/cli.mjs doctor",
+    "status": "node src/cli.mjs status",
+    "list": "node src/cli.mjs list",
+    "apply": "node src/cli.mjs apply --theme xp-qq"
+  }
+}

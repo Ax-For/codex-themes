@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "xp-qq",
+  "name": "Windows XP · QQ",
+  "hero": "hero.png",
+  "colors": {
+    "accent": "#2879BD",
+    "secondary": "#6B93B3",
+    "surface": "#F4F8FC",
+    "text": "#20364A"
+  },
+  "copy": null
+}

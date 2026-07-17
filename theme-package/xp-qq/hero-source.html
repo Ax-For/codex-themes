@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XP QQ Theme Background</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      body {
+        position: relative;
+        background:
+          radial-gradient(ellipse 80% 52% at 76% 111%, #438830 0 68%, transparent 68.5%),
+          radial-gradient(ellipse 74% 45% at 9% 108%, #76b94c 0 69%, transparent 69.5%),
+          linear-gradient(180deg, #3288d6 0%, #77bee9 77%, #bfe5f4 100%);
+      }
+      .cloud, .cloud::before, .cloud::after {
+        position: absolute;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        filter: blur(1px);
+      }
+      .cloud { width: 190px; height: 44px; top: 125px; right: 150px; }
+      .cloud::before { content: ""; width: 82px; height: 82px; left: 30px; bottom: 0; }
+      .cloud::after { content: ""; width: 112px; height: 67px; right: 18px; bottom: 0; }
+      .cloud.small { top: 238px; right: 500px; width: 110px; height: 28px; opacity: 0.62; transform: scale(.78); }
+      .bubble {
+        position: absolute;
+        width: 88px;
+        height: 66px;
+        border: 3px solid rgba(255, 255, 255, 0.35);
+        border-radius: 26px 26px 30px 16px;
+        background: rgba(207, 236, 255, 0.16);
+        box-shadow: inset 0 1px rgba(255, 255, 255, 0.45), 0 9px 24px rgba(0, 69, 145, 0.12);
+      }
+      .bubble::after {
+        content: "";
+        position: absolute;
+        left: 11px;
+        bottom: -12px;
+        width: 18px;
+        height: 18px;
+        border: solid rgba(255, 255, 255, 0.35);
+        border-width: 0 0 3px 3px;
+        background: rgba(207, 236, 255, 0.08);
+        transform: skewY(-34deg);
+      }
+      .bubble.one { right: 76px; bottom: 112px; transform: rotate(-7deg) scale(1.15); }
+      .bubble.two { right: 284px; bottom: 72px; transform: rotate(8deg) scale(.72); opacity: .68; }
+      .shine {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(118deg, rgba(255,255,255,.18), transparent 34% 72%, rgba(255,255,255,.08));
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cloud"></div>
+    <div class="cloud small"></div>
+    <div class="bubble one"></div>
+    <div class="bubble two"></div>
+    <div class="shine"></div>
+  </body>
+</html>
