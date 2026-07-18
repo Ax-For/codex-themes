@@ -275,6 +275,7 @@ export function buildSkinMenuScript({
   let clearXpQqWelcomeRoles = () => {};
   let clearXpQqUserNames = () => {};
   let clearXpQqContacts = () => {};
+  let clearXpQqModeSwitch = () => {};
   let restoreXpQqSidebarActions = () => {};
   let disposed = false;
   let runtime;
@@ -309,6 +310,7 @@ export function buildSkinMenuScript({
     clearXpQqWelcomeRoles();
     clearXpQqUserNames();
     clearXpQqContacts();
+    clearXpQqModeSwitch();
     restoreXpQqSidebarActions();
     channel.close();
     const ownedMenu = document.getElementById(data.menuId);
@@ -319,7 +321,6 @@ export function buildSkinMenuScript({
     const ownedProfile = document.getElementById(data.profile.cardId);
     const ownedProfilePanel = document.getElementById(data.profile.panelId);
     const ownedFileTitle = document.getElementById(data.fileTitleId);
-    const ownedModeSwitch = document.querySelector('[data-heige-role="xp-qq-mode-switch"]');
     if (ownedMenu?.dataset.heigeGeneration === generation) ownedMenu.remove();
     if (ownedStyle?.dataset.heigeGeneration === generation) ownedStyle.remove();
     if (ownedAvatarButton?.dataset.heigeGeneration === generation) ownedAvatarButton.remove();
@@ -328,15 +329,6 @@ export function buildSkinMenuScript({
     if (ownedProfile?.dataset.heigeGeneration === generation) ownedProfile.remove();
     if (ownedProfilePanel?.dataset.heigeGeneration === generation) ownedProfilePanel.remove();
     if (ownedFileTitle?.dataset.heigeGeneration === generation) ownedFileTitle.remove();
-    if (ownedModeSwitch) {
-      const home = ownedModeSwitch.__heigeXpQqModeHome;
-      const next = ownedModeSwitch.__heigeXpQqModeNext;
-      delete ownedModeSwitch.dataset.heigeRole;
-      if (home?.isConnected) {
-        if (next?.parentElement === home) home.insertBefore(ownedModeSwitch, next);
-        else home.appendChild(ownedModeSwitch);
-      }
-    }
     document.documentElement.style.removeProperty("--heige-xp-qq-avatar-image");
     delete document.documentElement.dataset.heigeXpQqAvatar;
     if (window.__heigeCodexSkinRuntime === runtime) {
@@ -1088,80 +1080,101 @@ export function buildSkinMenuScript({
   trackedObservers.add(profileObserver);
 
   let modeSwitchNode = null;
-  let modeSwitchHome = null;
-  let modeSwitchNextSibling = null;
+  let modeSwitchProxy = null;
+  clearXpQqModeSwitch = () => {
+    modeSwitchNode?.removeAttribute("data-heige-native-mode-hidden");
+    modeSwitchProxy?.remove();
+    modeSwitchNode = null;
+    modeSwitchProxy = null;
+  };
   const syncXpQqModeSwitch = () => {
     if (!isCurrent()) return;
-    const sidebar = document.querySelector(".app-shell-left-panel");
+    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
     const modeButton = document.querySelector('button[aria-label^="切换模式"]');
     const candidate = modeButton?.parentElement ?? null;
     if (candidate && candidate !== modeSwitchNode) {
-      const fallbackHome = sidebar?.querySelector("nav .relative.z-10.flex.shrink-0.flex-col") ?? null;
-      const candidateAlreadyMoved = candidate.parentElement === sidebar;
+      clearXpQqModeSwitch();
       modeSwitchNode = candidate;
-      modeSwitchHome = candidate.__heigeXpQqModeHome
-        ?? (candidateAlreadyMoved ? fallbackHome : candidate.parentElement);
-      modeSwitchNextSibling = candidate.__heigeXpQqModeNext
-        ?? (candidateAlreadyMoved ? fallbackHome?.firstChild ?? null : candidate.nextSibling);
-      candidate.__heigeXpQqModeHome = modeSwitchHome;
-      candidate.__heigeXpQqModeNext = modeSwitchNextSibling;
     }
-    if (!modeSwitchNode) return;
-    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
-    if (xpQqActive && sidebar) {
-      modeSwitchNode.dataset.heigeRole = "xp-qq-mode-switch";
-      if (modeSwitchNode.parentElement !== sidebar) sidebar.appendChild(modeSwitchNode);
+    if (!xpQqActive) {
+      clearXpQqModeSwitch();
       return;
     }
-    if (!xpQqActive && modeSwitchNode.dataset.heigeRole === "xp-qq-mode-switch") {
-      delete modeSwitchNode.dataset.heigeRole;
-      if (modeSwitchHome?.isConnected) {
-        if (modeSwitchNextSibling?.parentElement === modeSwitchHome) {
-          modeSwitchHome.insertBefore(modeSwitchNode, modeSwitchNextSibling);
-        } else {
-          modeSwitchHome.appendChild(modeSwitchNode);
-        }
-      }
+    const sidebar = document.querySelector(".app-shell-left-panel");
+    const nativeButton = modeSwitchNode?.querySelector('button[aria-label^="切换模式"]') ?? null;
+    if (!sidebar || !modeSwitchNode || !nativeButton) return;
+    modeSwitchNode.setAttribute("data-heige-native-mode-hidden", "true");
+    if (!modeSwitchProxy?.isConnected) {
+      modeSwitchProxy = document.createElement("button");
+      modeSwitchProxy.id = "heige-xp-qq-mode-switch";
+      modeSwitchProxy.type = "button";
+      modeSwitchProxy.dataset.heigeRole = "xp-qq-mode-switch";
+      modeSwitchProxy.setAttribute("aria-haspopup", "menu");
+      const openNativeModeMenu = () => {
+        const target = modeSwitchNode?.querySelector('button[aria-label^="切换模式"]');
+        if (!target?.isConnected || target.disabled) return;
+        target.dispatchEvent(new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+          button: 0,
+          buttons: 1,
+        }));
+      };
+      listen(modeSwitchProxy, "pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      listen(modeSwitchProxy, "click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        later(openNativeModeMenu, 0);
+      });
+      sidebar.appendChild(modeSwitchProxy);
+    }
+    const label = (nativeButton.textContent ?? "Codex").trim() || "Codex";
+    if (modeSwitchProxy.textContent !== label) modeSwitchProxy.textContent = label;
+    const expanded = nativeButton.getAttribute("data-state") === "open";
+    modeSwitchProxy.setAttribute("aria-expanded", String(expanded));
+    const proxyLabel = "切换 Codex 与 ChatGPT，当前模式：" + label;
+    if (modeSwitchProxy.getAttribute("aria-label") !== proxyLabel) {
+      modeSwitchProxy.setAttribute("aria-label", proxyLabel);
+    }
+    if (modeSwitchProxy.disabled !== nativeButton.disabled) {
+      modeSwitchProxy.disabled = nativeButton.disabled;
     }
   };
   syncXpQqModeSwitch();
   const modeSwitchObserver = new MutationObserver(syncXpQqModeSwitch);
   modeSwitchObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-heige-codex-skin"],
+    attributeFilter: ["aria-label", "data-heige-codex-skin", "data-state", "disabled"],
     childList: true,
     subtree: true,
   });
   trackedObservers.add(modeSwitchObserver);
 
   /* QQ clients present their primary destinations as a compact tab strip.
-   * Move Codex's five real sidebar actions into one owned toolbar while the
-   * theme is active, then restore every node to its original parent/order. */
+   * Keep every React-owned Codex node in its original parent. The owned proxy
+   * toolbar delegates to the native buttons so mode changes can safely unmount
+   * the original sidebar without React reconciling externally moved nodes. */
   const sidebarActionLabels = ["新建任务", "拉取请求", "站点", "已安排", "插件"];
   let sidebarActionsToolbar = null;
-  let sidebarActionHomes = [];
-  let sidebarActionSources = [];
+  let sidebarActionNativeNodes = [];
+  let sidebarActionNativeButtons = [];
   const directChildContaining = (rootNode, descendant) => {
     let node = descendant;
     while (node && node.parentElement !== rootNode) node = node.parentElement;
     return node?.parentElement === rootNode ? node : null;
   };
   restoreXpQqSidebarActions = () => {
-    for (const entry of sidebarActionHomes) {
-      const { node, home, next } = entry;
-      delete node.dataset.heigeRole;
-      delete node.dataset.heigeSidebarActionLabel;
+    for (const node of sidebarActionNativeNodes) {
+      node.removeAttribute("data-heige-native-action-hidden");
       delete node.dataset.heigeSidebarActionsGeneration;
-      if (!home?.isConnected) continue;
-      if (next?.parentElement === home) home.insertBefore(node, next);
-      else home.appendChild(node);
     }
-    sidebarActionHomes = [];
-    for (const source of sidebarActionSources) {
-      delete source.dataset.heigeRole;
-      delete source.dataset.heigeSidebarActionsGeneration;
-    }
-    sidebarActionSources = [];
+    sidebarActionNativeNodes = [];
+    sidebarActionNativeButtons = [];
     sidebarActionsToolbar?.remove();
     sidebarActionsToolbar = null;
   };
@@ -1172,7 +1185,16 @@ export function buildSkinMenuScript({
       restoreXpQqSidebarActions();
       return;
     }
-    if (sidebarActionsToolbar?.isConnected && sidebarActionsToolbar.children.length === 5) return;
+    if (
+      sidebarActionsToolbar?.isConnected
+      && sidebarActionsToolbar.children.length === 5
+      && sidebarActionNativeButtons.every((button) => button.isConnected)
+    ) {
+      [...sidebarActionsToolbar.children].forEach((proxy, index) => {
+        proxy.disabled = sidebarActionNativeButtons[index]?.disabled === true;
+      });
+      return;
+    }
     restoreXpQqSidebarActions();
     const nav = document.querySelector(".app-shell-left-panel nav");
     const scroll = nav?.querySelector("[data-app-action-sidebar-scroll]") ?? null;
@@ -1187,7 +1209,6 @@ export function buildSkinMenuScript({
     const newTaskSource = directChildContaining(nav, newTaskRow);
     const quickActionSource = directChildContaining(scroll, buttons[1]);
     if (!newTaskRow || !newTaskSource || !quickActionSource) return;
-    const actions = [newTaskRow, ...buttons.slice(1)];
     const toolbar = document.createElement("div");
     toolbar.id = data.sidebarActionsId;
     toolbar.dataset.heigeRole = "xp-qq-sidebar-actions";
@@ -1196,17 +1217,33 @@ export function buildSkinMenuScript({
     toolbar.setAttribute("aria-label", "主要功能");
     nav.insertBefore(toolbar, newTaskSource);
     sidebarActionsToolbar = toolbar;
-    sidebarActionSources = [newTaskSource, quickActionSource];
-    for (const source of sidebarActionSources) {
-      source.dataset.heigeRole = "xp-qq-sidebar-actions-source";
-      source.dataset.heigeSidebarActionsGeneration = generation;
+    sidebarActionNativeNodes = [newTaskRow, ...buttons.slice(1)];
+    sidebarActionNativeButtons = buttons;
+    for (const node of sidebarActionNativeNodes) {
+      node.dataset.heigeSidebarActionsGeneration = generation;
+      node.setAttribute("data-heige-native-action-hidden", "true");
     }
-    actions.forEach((action, index) => {
-      sidebarActionHomes.push({ node: action, home: action.parentElement, next: action.nextSibling });
-      action.dataset.heigeRole = "xp-qq-sidebar-action";
-      action.dataset.heigeSidebarActionLabel = sidebarActionLabels[index];
-      action.dataset.heigeSidebarActionsGeneration = generation;
-      toolbar.appendChild(action);
+    buttons.forEach((nativeButton, index) => {
+      const proxy = document.createElement("button");
+      proxy.type = "button";
+      proxy.dataset.heigeRole = "xp-qq-sidebar-action";
+      proxy.dataset.heigeSidebarActionLabel = sidebarActionLabels[index];
+      proxy.dataset.heigeSidebarActionsGeneration = generation;
+      proxy.setAttribute("aria-label", sidebarActionLabels[index]);
+      proxy.disabled = nativeButton.disabled;
+      const icon = nativeButton.querySelector("svg")?.cloneNode(true) ?? null;
+      if (icon) {
+        icon.setAttribute("aria-hidden", "true");
+        proxy.appendChild(icon);
+      }
+      const label = document.createElement("span");
+      label.className = "heige-xp-qq-sidebar-action-label";
+      label.textContent = sidebarActionLabels[index];
+      proxy.appendChild(label);
+      listen(proxy, "click", () => {
+        if (nativeButton.isConnected && !nativeButton.disabled) nativeButton.click();
+      });
+      toolbar.appendChild(proxy);
     });
   };
   syncXpQqSidebarActions();

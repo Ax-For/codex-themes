@@ -151,7 +151,7 @@ test("generated skin menu installs the XP QQ runtime helpers", () => {
   assert.match(script, /syncXpQqSidebarActions/);
   assert.match(script, /restoreXpQqSidebarActions/);
   assert.match(script, /xp-qq-sidebar-action/);
-  assert.match(script, /xp-qq-sidebar-actions-source/);
+  assert.match(script, /data-heige-native-action-hidden/);
   assert.match(script, /"新建任务", "拉取请求", "站点", "已安排", "插件"/);
   assert.match(script, /syncXpQqContacts/);
   assert.match(script, /clearXpQqContacts/);
@@ -174,4 +174,23 @@ test("generated skin menu installs the XP QQ runtime helpers", () => {
   assert.match(script, /ResizeObserver/);
   assert.match(script, /MutationObserver/);
   assert.doesNotThrow(() => new Function(script));
+});
+
+test("XP QQ mode switching never reparents React-owned navigation nodes", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  assert.doesNotMatch(script, /appendChild\(modeSwitchNode\)/);
+  assert.doesNotMatch(script, /insertBefore\(modeSwitchNode/);
+  assert.doesNotMatch(script, /toolbar\.appendChild\(action\)/);
+  assert.doesNotMatch(script, /xp-qq-sidebar-actions-source/);
+  assert.match(script, /modeSwitchProxy/);
+  assert.match(script, /data-heige-native-mode-hidden/);
+  assert.match(script, /new PointerEvent\("pointerdown"/);
+  assert.match(script, /nativeButton\.click\(\)/);
+  assert.match(script, /data-heige-native-action-hidden/);
 });
