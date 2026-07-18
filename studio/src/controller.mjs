@@ -594,6 +594,17 @@ export function createSkinController(input) {
   let setThemeSelectionFromRenderer;
   let processRendererRequest;
 
+  const readRendererControlRequest = async () => {
+    if (typeof deps.inspectSkin !== "function") return null;
+    try {
+      return pendingRendererControlRequest(await deps.inspectSkin({
+        purpose: "renderer-control-request",
+      }));
+    } catch {
+      return null;
+    }
+  };
+
   const ensureServer = async (state) => {
     const started = server === null;
     if (server === null) {
@@ -912,6 +923,16 @@ export function createSkinController(input) {
     const selectiveTargets = targetHealth.selective
       ? targetHealth.repairTargets
       : null;
+    // A renderer request may arrive while the health probe above is in flight.
+    // Never let that stale repair overwrite the optimistic selection (or erase
+    // the request by replacing its runtime). The next tick owns the request and
+    // performs the authoritative forced repair after committing controller state.
+    if (!forceRepair && await readRendererControlRequest() !== null) {
+      consecutiveFailures = 0;
+      return result("idle", expectedMode, state, includeHealthCount
+        ? { consecutiveFailures, deferredRendererRequest: true }
+        : undefined);
+    }
     const injected = await deps.injectSkin({
       themeId: state.selectedThemeId,
       process: processIdentity,
@@ -974,16 +995,8 @@ export function createSkinController(input) {
       const mode = lastKnownState?.selectedThemeId === NATIVE_THEME_ID ? "native" : "active";
       return result("handoff", mode, lastKnownState);
     }
-    if (
-      typeof deps.inspectSkin === "function" &&
-      typeof processRendererRequest === "function"
-    ) {
-      let request = null;
-      try {
-        request = pendingRendererControlRequest(await deps.inspectSkin({
-          purpose: "renderer-control-request",
-        }));
-      } catch {}
+    if (typeof processRendererRequest === "function") {
+      const request = await readRendererControlRequest();
       if (request !== null) {
         const handled = await processRendererRequest(request);
         if (handled !== null) return handled;

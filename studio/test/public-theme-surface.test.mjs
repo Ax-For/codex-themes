@@ -48,7 +48,7 @@ test("injected menu has one skin option plus native and no custom upload", async
   assert.doesNotMatch(script, /自定义图片/);
 });
 
-test("injected menu keeps the trigger anchored while the panel opens", () => {
+test("injected menu applies theme immediately through one queued controller request", () => {
   const script = buildSkinMenuScript({
     entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
     activeId: "xp-qq",
@@ -59,11 +59,33 @@ test("injected menu keeps the trigger anchored while the panel opens", () => {
   assert.match(script, /width:30px;height:30px/);
   assert.match(script, /position:absolute;top:100%;left:50%;transform:translateX\(-50%\)/);
   assert.match(script, /listen\(document, "keydown"/);
+  const queuedRequest = script.indexOf("queued = queueControlRequest(fallbackRequest");
+  const optimisticApply = script.indexOf("applyThemeSelection(themeId);");
+  const optimisticClose = script.indexOf("setPanelOpen(false, { focusTrigger: true });", optimisticApply);
   assert.ok(
-    script.indexOf("queued = queueControlRequest(fallbackRequest);")
-      < script.indexOf("const response = await fetch(themeEndpoint"),
-    "theme selection must be visible to the controller before the CSP-blocked fetch fast path",
+    queuedRequest !== -1 && queuedRequest < optimisticApply && optimisticApply < optimisticClose,
+    "the request must be durable before the selected theme and closed menu become visible",
   );
+  assert.match(script, /onTimeout: rollbackThemeSelection/);
+  assert.doesNotMatch(script, /fetch\(themeEndpoint/);
+});
+
+test("XP QQ mode proxy aligns the native popover anchor before opening it", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  assert.match(script, /const alignNativeModeAnchor = \(target\) =>/);
+  assert.match(script, /const proxyRect = modeSwitchProxy\.getBoundingClientRect\(\);/);
+  const align = script.indexOf("alignNativeModeAnchor(target);");
+  const dispatch = script.indexOf('target.dispatchEvent(new PointerEvent("pointerdown"', align);
+  assert.ok(align !== -1 && dispatch > align, "native anchor must be aligned before Radix measures it");
+  assert.match(script, /target\.style\.setProperty\("position", "fixed", "important"\)/);
+  assert.match(script, /const positionedRect = target\.getBoundingClientRect\(\);/);
+  assert.match(script, /proxyRect\.top - positionedRect\.top/);
 });
 
 test("public CLI does not expose theme creation or unrelated installers", async () => {

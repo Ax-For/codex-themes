@@ -1081,7 +1081,19 @@ export function buildSkinMenuScript({
 
   let modeSwitchNode = null;
   let modeSwitchProxy = null;
+  let modeSwitchNativeAnchor = null;
+  let modeSwitchNativeInlineStyle = null;
+  const restoreNativeModeAnchor = () => {
+    if (modeSwitchNativeAnchor?.isConnected) {
+      if (modeSwitchNativeInlineStyle === null) modeSwitchNativeAnchor.removeAttribute("style");
+      else modeSwitchNativeAnchor.setAttribute("style", modeSwitchNativeInlineStyle);
+      modeSwitchNativeAnchor.removeAttribute("data-heige-native-mode-anchor");
+    }
+    modeSwitchNativeAnchor = null;
+    modeSwitchNativeInlineStyle = null;
+  };
   clearXpQqModeSwitch = () => {
+    restoreNativeModeAnchor();
     modeSwitchNode?.removeAttribute("data-heige-native-mode-hidden");
     modeSwitchProxy?.remove();
     modeSwitchNode = null;
@@ -1103,7 +1115,38 @@ export function buildSkinMenuScript({
     const sidebar = document.querySelector(".app-shell-left-panel");
     const nativeButton = modeSwitchNode?.querySelector('button[aria-label^="切换模式"]') ?? null;
     if (!sidebar || !modeSwitchNode || !nativeButton) return;
+    if (nativeButton !== modeSwitchNativeAnchor) {
+      restoreNativeModeAnchor();
+      modeSwitchNativeAnchor = nativeButton;
+      modeSwitchNativeInlineStyle = nativeButton.getAttribute("style");
+    }
     modeSwitchNode.setAttribute("data-heige-native-mode-hidden", "true");
+    const alignNativeModeAnchor = (target) => {
+      if (!target?.isConnected || !modeSwitchProxy?.isConnected) return;
+      const proxyRect = modeSwitchProxy.getBoundingClientRect();
+      target.dataset.heigeNativeModeAnchor = "true";
+      target.style.setProperty("position", "fixed", "important");
+      target.style.setProperty("left", proxyRect.left + "px", "important");
+      target.style.setProperty("top", proxyRect.top + "px", "important");
+      target.style.setProperty("width", proxyRect.width + "px", "important");
+      target.style.setProperty("height", proxyRect.height + "px", "important");
+      target.style.setProperty("margin", "0", "important");
+      target.style.setProperty("transform", "none", "important");
+      // A transformed sidebar ancestor can become the containing block for a
+      // fixed descendant. Measure once and cancel that inherited offset so the
+      // Radix trigger occupies the proxy's exact viewport rectangle.
+      const positionedRect = target.getBoundingClientRect();
+      target.style.setProperty(
+        "left",
+        proxyRect.left + (proxyRect.left - positionedRect.left) + "px",
+        "important",
+      );
+      target.style.setProperty(
+        "top",
+        proxyRect.top + (proxyRect.top - positionedRect.top) + "px",
+        "important",
+      );
+    };
     if (!modeSwitchProxy?.isConnected) {
       modeSwitchProxy = document.createElement("button");
       modeSwitchProxy.id = "heige-xp-qq-mode-switch";
@@ -1113,6 +1156,7 @@ export function buildSkinMenuScript({
       const openNativeModeMenu = () => {
         const target = modeSwitchNode?.querySelector('button[aria-label^="切换模式"]');
         if (!target?.isConnected || target.disabled) return;
+        alignNativeModeAnchor(target);
         target.dispatchEvent(new PointerEvent("pointerdown", {
           bubbles: true,
           cancelable: true,
@@ -1133,6 +1177,7 @@ export function buildSkinMenuScript({
       });
       sidebar.appendChild(modeSwitchProxy);
     }
+    alignNativeModeAnchor(nativeButton);
     const label = (nativeButton.textContent ?? "Codex").trim() || "Codex";
     if (modeSwitchProxy.textContent !== label) modeSwitchProxy.textContent = label;
     const expanded = nativeButton.getAttribute("data-state") === "open";
@@ -1154,6 +1199,7 @@ export function buildSkinMenuScript({
     subtree: true,
   });
   trackedObservers.add(modeSwitchObserver);
+  listen(window, "resize", syncXpQqModeSwitch);
 
   /* QQ clients present their primary destinations as a compact tab strip.
    * Keep every React-owned Codex node in its original parent. The owned proxy
@@ -1617,7 +1663,6 @@ export function buildSkinMenuScript({
     let pending = false;
     let themePending = false;
     let controlRequestTimeout = null;
-    const themeEndpoint = data.control.endpoint.slice(0, -"/v1/persistence".length) + "/v1/theme";
     const newRequestId = () => {
       const bytes = new Uint8Array(16);
       globalThis.crypto.getRandomValues(bytes);
@@ -1662,7 +1707,6 @@ export function buildSkinMenuScript({
       detail = detail
         .split(data.control.token).join("[已隐去]")
         .split(data.control.endpoint).join("本机控制端点")
-        .split(themeEndpoint).join("本机主题端点");
       detail = detail.replace(/[\\r\\n\\t]+/g, " ").slice(0, 160);
       return detail.includes("控制器不可用") ? detail : "控制器不可用：" + detail;
     };
@@ -1673,7 +1717,7 @@ export function buildSkinMenuScript({
       controlRequest = null;
       return cleared;
     };
-    const queueControlRequest = (request) => {
+    const queueControlRequest = (request, { onTimeout = null } = {}) => {
       if (controlRequest !== null) return false;
       controlRequest = request;
       controlRequestTimeout = later(() => {
@@ -1687,12 +1731,17 @@ export function buildSkinMenuScript({
           themePending = false;
           for (const item of rows.values()) item.disabled = false;
         }
+        try { onTimeout?.(); } catch {}
         showAlert("后台控制器未确认，请重试");
       }, 15000);
       showAlert("正在等待后台确认…", "success");
       return true;
     };
     const isRevision = (value) => Number.isSafeInteger(value) && value >= 0;
+    const applyThemeSelection = (themeId) => {
+      if (themeId === data.nativeSel) clearTheme(true, true);
+      else setTheme(themeId, true, true);
+    };
     requestThemeSelection = async (themeId) => {
       assertCurrent();
       const currentThemeId = document.documentElement.dataset.heigeCodexSkin ?? data.nativeSel;
@@ -1712,82 +1761,24 @@ export function buildSkinMenuScript({
       };
       themePending = true;
       let queued = false;
+      let rolledBack = false;
+      const rollbackThemeSelection = () => {
+        if (rolledBack || !isCurrent()) return;
+        rolledBack = true;
+        applyThemeSelection(currentThemeId);
+      };
       hideAlert();
       for (const item of rows.values()) item.disabled = true;
-      queued = queueControlRequest(fallbackRequest);
+      queued = queueControlRequest(fallbackRequest, { onTimeout: rollbackThemeSelection });
       if (!queued) {
         themePending = false;
         for (const item of rows.values()) item.disabled = false;
         showAlert("已有主题切换正在等待后台确认");
         return false;
       }
-      const abortController = childController();
-      const timeoutId = later(() => abortController.abort(), 3000);
-      try {
-        const response = await fetch(themeEndpoint, {
-          method: "POST",
-          mode: "cors",
-          cache: "no-store",
-          credentials: "omit",
-          redirect: "error",
-          referrerPolicy: "no-referrer",
-          headers: {
-            "Content-Type": "application/json",
-            "X-HeiGe-Control-Token": data.control.token,
-          },
-          body: JSON.stringify({ revision: requestRevision, themeId }),
-          signal: abortController.signal,
-        });
-        assertCurrent();
-        const body = await response.json();
-        assertCurrent();
-        clearControlRequest();
-        queued = false;
-        if (!response.ok) {
-          if (
-            body?.ok === false &&
-            body.persistenceEnabled === persistenceEnabled &&
-            isRevision(body.revision) &&
-            body.revision > controlRevision
-          ) {
-            controlRevision = body.revision;
-            publish("persistence", { enabled: persistenceEnabled, revision: controlRevision });
-          }
-          const message = typeof body?.message === "string" && body.message.length <= 160
-            ? body.message
-            : "后台拒绝了主题选择，界面未更改";
-          showAlert(message);
-          return false;
-        }
-        if (
-          body?.ok !== true ||
-          body.themeId !== themeId ||
-          body.persistenceEnabled !== persistenceEnabled ||
-          !isRevision(body.revision) ||
-          body.revision < requestRevision ||
-          body.revision < controlRevision
-        ) {
-          throw new Error("后台未确认主题选择，界面未更改");
-        }
-        controlRevision = body.revision;
-        publish("persistence", { enabled: persistenceEnabled, revision: controlRevision });
-        if (themeId === data.nativeSel) clearTheme(true, true);
-        else setTheme(themeId, true, true);
-        showAlert("主题选择已保存。", "success");
-        return true;
-      } catch (error) {
-        if (isCurrent() && !queued) showAlert(safeClientError(error));
-        return false;
-      } finally {
-        clearLater(timeoutId);
-        trackedControllers.delete(abortController);
-        if (isCurrent()) {
-          if (!queued) {
-            themePending = false;
-            for (const item of rows.values()) item.disabled = false;
-          }
-        }
-      }
+      applyThemeSelection(themeId);
+      setPanelOpen(false, { focusTrigger: true });
+      return true;
     };
     const requestPersistence = async (target, restoreFocus = false) => {
       assertCurrent();

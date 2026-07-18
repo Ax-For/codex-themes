@@ -1214,6 +1214,12 @@ async function cleanupUnreachableFinalArtifacts({
     );
   }
 
+  // Use one conservative chain snapshot for the common reachable case. A
+  // concurrent compaction can make a reachable artifact unreachable, but it
+  // cannot make deleting it urgent. Potentially unreachable artifacts are
+  // still checked against the latest chain before and after their move.
+  // This avoids O(artifacts * chain depth) reads on long-running controllers.
+  let knownChain = await findTail(lockPath);
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     const expected = parseFinalArtifactName(lockPath, entry.name);
@@ -1221,8 +1227,7 @@ async function cleanupUnreachableFinalArtifacts({
     const path = join(parentPath, entry.name);
     const initial = await readFinalArtifact(path, expected);
     if (initial === null) continue;
-    const initialChain = await findTail(lockPath);
-    if (finalArtifactMatchesReachable(initial, initialChain)) continue;
+    if (finalArtifactMatchesReachable(initial, knownChain)) continue;
 
     const confirmed = await readFinalArtifact(path, expected);
     if (confirmed === null || !sameFileSnapshot(initial, confirmed)) continue;
@@ -1243,6 +1248,7 @@ async function cleanupUnreachableFinalArtifacts({
         );
       },
     });
+    knownChain = latestChain;
   }
 }
 
