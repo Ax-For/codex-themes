@@ -18,6 +18,64 @@ export const XP_QQ_AVATAR_RULES = Object.freeze({
   }),
 });
 
+export const XP_QQ_PROFILE_RULES = Object.freeze({
+  storageKey: "heigeCodexXpQqProfileV1",
+  nicknameMax: 24,
+  signatureMax: 48,
+  levelMin: 1,
+  levelMax: 5,
+  defaults: Object.freeze({
+    nickname: "For Ax",
+    signature: "在线 · 正在处理任务",
+    level: 3,
+  }),
+});
+
+export function normalizeXpQqProfile(value, rules = XP_QQ_PROFILE_RULES) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  const keys = Object.keys(value).sort();
+  if (keys.length !== 3 || keys[0] !== "level" || keys[1] !== "nickname" || keys[2] !== "signature") {
+    return null;
+  }
+  if (
+    typeof value.nickname !== "string"
+    || typeof value.signature !== "string"
+    || !Number.isInteger(value.level)
+  ) return null;
+  const clean = (text) => text.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim();
+  const nickname = clean(value.nickname);
+  const signature = clean(value.signature);
+  if (
+    nickname.length < 1
+    || [...nickname].length > rules.nicknameMax
+    || [...signature].length > rules.signatureMax
+    || value.level < rules.levelMin
+    || value.level > rules.levelMax
+  ) return null;
+  return { nickname, signature, level: value.level };
+}
+
+export function deriveXpQqContactIdentity(title, threadId = "") {
+  const normalized = typeof title === "string"
+    ? title.replace(/[\u0000-\u001f\u007f]+/g, " ").trim()
+    : "";
+  const symbol = [...normalized].find((character) => /[\p{L}\p{N}]/u.test(character)) ?? "C";
+  const initial = [...symbol.toLocaleUpperCase("en-US")][0] ?? "C";
+  let hash = 2166136261;
+  for (const character of String(threadId) + "|" + normalized) {
+    hash ^= character.codePointAt(0);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  return { initial, tone: hash % 6 };
+}
+
+export function xpQqContactStatus(state) {
+  if (state === "running") return "正在处理";
+  if (state === "active") return "当前会话";
+  if (state === "pinned") return "已置顶";
+  return "本地会话";
+}
+
 export function validateXpQqAvatarFileMeta(file, rules) {
   if (!file || typeof file.name !== "string" || typeof file.type !== "string") {
     return "请选择有效的本地图片";
@@ -135,7 +193,14 @@ export function buildSkinMenuScript({
       inputId: "heige-xp-qq-avatar-input",
       noticeId: "heige-xp-qq-avatar-notice",
     },
+    profile: {
+      ...XP_QQ_PROFILE_RULES,
+      cardId: "heige-xp-qq-profile",
+      editorId: "heige-xp-qq-profile-editor",
+      panelId: "heige-xp-qq-profile-panel",
+    },
     fileTitleId: "heige-xp-qq-file-title",
+    sidebarActionsId: "heige-xp-qq-sidebar-actions",
   });
 
   return `(() => {
@@ -144,6 +209,9 @@ export function buildSkinMenuScript({
   const validateXpQqAvatarFileMeta = (${validateXpQqAvatarFileMeta.toString()});
   const computeXpQqAvatarCrop = (${computeXpQqAvatarCrop.toString()});
   const isSafeXpQqAvatarDataUrl = (${isSafeXpQqAvatarDataUrl.toString()});
+  const normalizeXpQqProfile = (${normalizeXpQqProfile.toString()});
+  const deriveXpQqContactIdentity = (${deriveXpQqContactIdentity.toString()});
+  const xpQqContactStatus = (${xpQqContactStatus.toString()});
 
   const runtimeAbortController = new AbortController();
   const signal = runtimeAbortController.signal;
@@ -157,6 +225,7 @@ export function buildSkinMenuScript({
   const trackedImages = new Map();
   const trackedControllers = new Set();
   const trackedObservers = new Set();
+  const trackedDiffShadowStyles = new Set();
   const rawChannel = typeof BroadcastChannel === "function"
     ? new BroadcastChannel("heige-codex-skin-v2")
     : null;
@@ -203,6 +272,10 @@ export function buildSkinMenuScript({
     persistenceEnabled: data.control?.persistenceEnabled ?? false,
     revision: data.control?.revision ?? 0,
   });
+  let clearXpQqWelcomeRoles = () => {};
+  let clearXpQqUserNames = () => {};
+  let clearXpQqContacts = () => {};
+  let restoreXpQqSidebarActions = () => {};
   let disposed = false;
   let runtime;
   const dispose = () => {
@@ -229,12 +302,22 @@ export function buildSkinMenuScript({
       try { observer.disconnect(); } catch {}
     }
     trackedObservers.clear();
+    for (const shadowStyle of trackedDiffShadowStyles) {
+      try { shadowStyle.remove(); } catch {}
+    }
+    trackedDiffShadowStyles.clear();
+    clearXpQqWelcomeRoles();
+    clearXpQqUserNames();
+    clearXpQqContacts();
+    restoreXpQqSidebarActions();
     channel.close();
     const ownedMenu = document.getElementById(data.menuId);
     const ownedStyle = document.getElementById(data.styleId);
     const ownedAvatarButton = document.getElementById(data.avatar.buttonId);
     const ownedAvatarInput = document.getElementById(data.avatar.inputId);
     const ownedAvatarNotice = document.getElementById(data.avatar.noticeId);
+    const ownedProfile = document.getElementById(data.profile.cardId);
+    const ownedProfilePanel = document.getElementById(data.profile.panelId);
     const ownedFileTitle = document.getElementById(data.fileTitleId);
     const ownedModeSwitch = document.querySelector('[data-heige-role="xp-qq-mode-switch"]');
     if (ownedMenu?.dataset.heigeGeneration === generation) ownedMenu.remove();
@@ -242,6 +325,8 @@ export function buildSkinMenuScript({
     if (ownedAvatarButton?.dataset.heigeGeneration === generation) ownedAvatarButton.remove();
     if (ownedAvatarInput?.dataset.heigeGeneration === generation) ownedAvatarInput.remove();
     if (ownedAvatarNotice?.dataset.heigeGeneration === generation) ownedAvatarNotice.remove();
+    if (ownedProfile?.dataset.heigeGeneration === generation) ownedProfile.remove();
+    if (ownedProfilePanel?.dataset.heigeGeneration === generation) ownedProfilePanel.remove();
     if (ownedFileTitle?.dataset.heigeGeneration === generation) ownedFileTitle.remove();
     if (ownedModeSwitch) {
       const home = ownedModeSwitch.__heigeXpQqModeHome;
@@ -376,6 +461,7 @@ export function buildSkinMenuScript({
     if (!theme) return;
     style.textContent = theme.css;
     document.documentElement.dataset.heigeCodexSkin = theme.id;
+    syncXpQqDiffShadows();
     paint(theme.id);
     if (persist) writeSelected(theme.id);
     if (broadcast) publish("theme", theme.id);
@@ -384,6 +470,7 @@ export function buildSkinMenuScript({
     if (!alive()) return;
     style.textContent = "";
     delete document.documentElement.dataset.heigeCodexSkin;
+    syncXpQqDiffShadows();
     paint(null);
     if (persist) writeSelected(data.nativeSel);
     if (broadcast) publish("theme", data.nativeSel);
@@ -778,6 +865,228 @@ export function buildSkinMenuScript({
     }
   } catch {}
 
+  // ---- XP QQ identity: nickname, signature and a compact classic level mark ----
+  const profileCard = document.createElement("section");
+  profileCard.id = data.profile.cardId;
+  profileCard.dataset.heigeGeneration = generation;
+  profileCard.dataset.heigeRole = "xp-qq-profile";
+  profileCard.setAttribute("aria-label", "QQ 资料");
+
+  const profileNickname = document.createElement("strong");
+  profileNickname.dataset.heigeRole = "xp-qq-profile-nickname";
+  const profileSignature = document.createElement("span");
+  profileSignature.dataset.heigeRole = "xp-qq-profile-signature";
+  const profileLevel = document.createElement("span");
+  profileLevel.dataset.heigeRole = "xp-qq-profile-level";
+
+  const profileEditor = document.createElement("button");
+  profileEditor.id = data.profile.editorId;
+  profileEditor.type = "button";
+  profileEditor.dataset.heigeRole = "xp-qq-profile-editor";
+  profileEditor.setAttribute("aria-label", "编辑 QQ 资料");
+  profileEditor.setAttribute("aria-expanded", "false");
+  profileEditor.title = "编辑网名、签名和等级";
+  profileEditor.textContent = "✎";
+  const profileHeadingRow = document.createElement("div");
+  profileHeadingRow.dataset.heigeRole = "xp-qq-profile-heading-row";
+  profileHeadingRow.append(profileNickname, profileEditor);
+  profileCard.append(profileHeadingRow, profileSignature, profileLevel);
+
+  const profilePanel = document.createElement("form");
+  profilePanel.id = data.profile.panelId;
+  profilePanel.dataset.heigeGeneration = generation;
+  profilePanel.dataset.heigeRole = "xp-qq-profile-panel";
+  profilePanel.setAttribute("role", "dialog");
+  profilePanel.setAttribute("aria-modal", "false");
+  profilePanel.setAttribute("aria-label", "编辑 QQ 资料");
+  profilePanel.hidden = true;
+
+  const profileHeading = document.createElement("strong");
+  profileHeading.dataset.heigeRole = "xp-qq-profile-heading";
+  profileHeading.textContent = "编辑 QQ 资料";
+
+  const profileField = (labelText, control) => {
+    const label = document.createElement("label");
+    label.dataset.heigeRole = "xp-qq-profile-field";
+    const caption = document.createElement("span");
+    caption.textContent = labelText;
+    label.append(caption, control);
+    return label;
+  };
+  const nicknameInput = document.createElement("input");
+  nicknameInput.name = "nickname";
+  nicknameInput.type = "text";
+  nicknameInput.maxLength = data.profile.nicknameMax;
+  nicknameInput.autocomplete = "off";
+  nicknameInput.placeholder = "例如：AX_FOR";
+
+  const signatureInput = document.createElement("input");
+  signatureInput.name = "signature";
+  signatureInput.type = "text";
+  signatureInput.maxLength = data.profile.signatureMax;
+  signatureInput.autocomplete = "off";
+  signatureInput.placeholder = "写一句个性签名";
+
+  const levelSelect = document.createElement("select");
+  levelSelect.name = "level";
+  for (let level = data.profile.levelMin; level <= data.profile.levelMax; level += 1) {
+    const option = document.createElement("option");
+    option.value = String(level);
+    option.textContent = "⭐".repeat(level) + "（" + level + " 星）";
+    levelSelect.appendChild(option);
+  }
+
+  const profileFeedback = document.createElement("div");
+  profileFeedback.dataset.heigeRole = "xp-qq-profile-feedback";
+  profileFeedback.setAttribute("role", "status");
+  profileFeedback.setAttribute("aria-live", "polite");
+  profileFeedback.hidden = true;
+
+  const profileActions = document.createElement("div");
+  profileActions.dataset.heigeRole = "xp-qq-profile-actions";
+  const profileCancel = document.createElement("button");
+  profileCancel.type = "button";
+  profileCancel.textContent = "取消";
+  const profileSave = document.createElement("button");
+  profileSave.type = "submit";
+  profileSave.textContent = "保存";
+  profileActions.append(profileCancel, profileSave);
+  profilePanel.append(
+    profileHeading,
+    profileField("网名 ID", nicknameInput),
+    profileField("QQ 签名", signatureInput),
+    profileField("等级", levelSelect),
+    profileFeedback,
+    profileActions,
+  );
+
+  let currentXpQqProfile = { ...data.profile.defaults };
+  let syncXpQqUserNames = () => {};
+  const levelText = (level) => "👑 🌙 " + "⭐".repeat(level);
+  const closeProfileEditor = ({ restoreFocus = false } = {}) => {
+    if (profilePanel.hidden) return;
+    profilePanel.hidden = true;
+    profileEditor.setAttribute("aria-expanded", "false");
+    profileFeedback.hidden = true;
+    profileFeedback.textContent = "";
+    if (restoreFocus) profileEditor.focus();
+  };
+  const applyXpQqProfile = (profile) => {
+    currentXpQqProfile = { ...profile };
+    profileNickname.textContent = profile.nickname;
+    profileSignature.textContent = profile.signature || "还没有个性签名";
+    profileLevel.textContent = levelText(profile.level);
+    profileLevel.setAttribute("aria-label", "QQ 等级 " + profile.level + " 星");
+    profileCard.title = profile.nickname + "\\n" + (profile.signature || "还没有个性签名");
+    syncXpQqUserNames();
+  };
+  const openProfileEditor = () => {
+    nicknameInput.value = currentXpQqProfile.nickname;
+    signatureInput.value = currentXpQqProfile.signature;
+    levelSelect.value = String(currentXpQqProfile.level);
+    profileFeedback.hidden = true;
+    profileFeedback.textContent = "";
+    profilePanel.hidden = false;
+    profileEditor.setAttribute("aria-expanded", "true");
+    nicknameInput.focus();
+    nicknameInput.select();
+  };
+  const readStoredProfile = (rawValue) => {
+    if (typeof rawValue !== "string" || rawValue.length > 1024) return null;
+    try { return normalizeXpQqProfile(JSON.parse(rawValue), data.profile); }
+    catch { return null; }
+  };
+  const saveProfile = (profile) => {
+    try {
+      localStorage.setItem(data.profile.storageKey, JSON.stringify(profile));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  clearXpQqUserNames = () => {
+    for (const bubble of document.querySelectorAll("[data-heige-xp-qq-nickname]")) {
+      bubble.removeAttribute("data-heige-xp-qq-nickname");
+    }
+  };
+  syncXpQqUserNames = () => {
+    if (!isCurrent()) return;
+    const active = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    profileCard.style.display = active ? "" : "none";
+    avatarButton.style.display = active ? "" : "none";
+    if (!active) {
+      closeProfileEditor();
+      clearXpQqUserNames();
+      return;
+    }
+    for (const bubble of document.querySelectorAll("[data-user-message-bubble]")) {
+      if (bubble.getAttribute("data-heige-xp-qq-nickname") !== currentXpQqProfile.nickname) {
+        bubble.setAttribute("data-heige-xp-qq-nickname", currentXpQqProfile.nickname);
+      }
+    }
+  };
+
+  listen(profileEditor, "click", () => {
+    if (profilePanel.hidden) openProfileEditor();
+    else closeProfileEditor({ restoreFocus: true });
+  });
+  listen(profileCancel, "click", () => closeProfileEditor({ restoreFocus: true }));
+  listen(profilePanel, "submit", (event) => {
+    event.preventDefault();
+    const profile = normalizeXpQqProfile({
+      nickname: nicknameInput.value,
+      signature: signatureInput.value,
+      level: Number(levelSelect.value),
+    }, data.profile);
+    if (profile === null) {
+      profileFeedback.textContent = "请填写 1–" + data.profile.nicknameMax + " 字网名，并选择有效等级";
+      profileFeedback.hidden = false;
+      nicknameInput.focus();
+      return;
+    }
+    const persisted = saveProfile(profile);
+    applyXpQqProfile(profile);
+    closeProfileEditor({ restoreFocus: true });
+    showAvatarNotice(
+      persisted ? "QQ 资料已更新并保存在本机" : "资料本次已更新，但本地空间不足",
+      persisted ? "success" : "warning",
+    );
+  });
+  listen(document, "keydown", (event) => {
+    if (event.key === "Escape" && !profilePanel.hidden) {
+      event.preventDefault();
+      closeProfileEditor({ restoreFocus: true });
+    }
+  });
+  listen(document, "pointerdown", (event) => {
+    if (
+      !profilePanel.hidden
+      && !profilePanel.contains(event.target)
+      && !profileCard.contains(event.target)
+    ) closeProfileEditor();
+  });
+
+  document.body.append(profileCard, profilePanel);
+  try {
+    const rawProfile = localStorage.getItem(data.profile.storageKey);
+    if (rawProfile !== null) {
+      const storedProfile = readStoredProfile(rawProfile);
+      if (storedProfile) currentXpQqProfile = storedProfile;
+      else localStorage.removeItem(data.profile.storageKey);
+    }
+  } catch {}
+  applyXpQqProfile(currentXpQqProfile);
+
+  const profileObserver = new MutationObserver(syncXpQqUserNames);
+  profileObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-heige-codex-skin"],
+    childList: true,
+    subtree: true,
+  });
+  trackedObservers.add(profileObserver);
+
   let modeSwitchNode = null;
   let modeSwitchHome = null;
   let modeSwitchNextSibling = null;
@@ -825,6 +1134,193 @@ export function buildSkinMenuScript({
   });
   trackedObservers.add(modeSwitchObserver);
 
+  /* QQ clients present their primary destinations as a compact tab strip.
+   * Move Codex's five real sidebar actions into one owned toolbar while the
+   * theme is active, then restore every node to its original parent/order. */
+  const sidebarActionLabels = ["新建任务", "拉取请求", "站点", "已安排", "插件"];
+  let sidebarActionsToolbar = null;
+  let sidebarActionHomes = [];
+  let sidebarActionSources = [];
+  const directChildContaining = (rootNode, descendant) => {
+    let node = descendant;
+    while (node && node.parentElement !== rootNode) node = node.parentElement;
+    return node?.parentElement === rootNode ? node : null;
+  };
+  restoreXpQqSidebarActions = () => {
+    for (const entry of sidebarActionHomes) {
+      const { node, home, next } = entry;
+      delete node.dataset.heigeRole;
+      delete node.dataset.heigeSidebarActionLabel;
+      delete node.dataset.heigeSidebarActionsGeneration;
+      if (!home?.isConnected) continue;
+      if (next?.parentElement === home) home.insertBefore(node, next);
+      else home.appendChild(node);
+    }
+    sidebarActionHomes = [];
+    for (const source of sidebarActionSources) {
+      delete source.dataset.heigeRole;
+      delete source.dataset.heigeSidebarActionsGeneration;
+    }
+    sidebarActionSources = [];
+    sidebarActionsToolbar?.remove();
+    sidebarActionsToolbar = null;
+  };
+  const syncXpQqSidebarActions = () => {
+    if (!isCurrent()) return;
+    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    if (!xpQqActive) {
+      restoreXpQqSidebarActions();
+      return;
+    }
+    if (sidebarActionsToolbar?.isConnected && sidebarActionsToolbar.children.length === 5) return;
+    restoreXpQqSidebarActions();
+    const nav = document.querySelector(".app-shell-left-panel nav");
+    const scroll = nav?.querySelector("[data-app-action-sidebar-scroll]") ?? null;
+    if (!nav || !scroll) return;
+    const buttons = sidebarActionLabels.map((label) => (
+      [...nav.querySelectorAll("button")].find((candidate) => (
+        (candidate.textContent ?? "").trim() === label
+      )) ?? null
+    ));
+    if (buttons.some((candidate) => candidate === null)) return;
+    const newTaskRow = buttons[0].parentElement;
+    const newTaskSource = directChildContaining(nav, newTaskRow);
+    const quickActionSource = directChildContaining(scroll, buttons[1]);
+    if (!newTaskRow || !newTaskSource || !quickActionSource) return;
+    const actions = [newTaskRow, ...buttons.slice(1)];
+    const toolbar = document.createElement("div");
+    toolbar.id = data.sidebarActionsId;
+    toolbar.dataset.heigeRole = "xp-qq-sidebar-actions";
+    toolbar.dataset.heigeGeneration = generation;
+    toolbar.setAttribute("role", "toolbar");
+    toolbar.setAttribute("aria-label", "主要功能");
+    nav.insertBefore(toolbar, newTaskSource);
+    sidebarActionsToolbar = toolbar;
+    sidebarActionSources = [newTaskSource, quickActionSource];
+    for (const source of sidebarActionSources) {
+      source.dataset.heigeRole = "xp-qq-sidebar-actions-source";
+      source.dataset.heigeSidebarActionsGeneration = generation;
+    }
+    actions.forEach((action, index) => {
+      sidebarActionHomes.push({ node: action, home: action.parentElement, next: action.nextSibling });
+      action.dataset.heigeRole = "xp-qq-sidebar-action";
+      action.dataset.heigeSidebarActionLabel = sidebarActionLabels[index];
+      action.dataset.heigeSidebarActionsGeneration = generation;
+      toolbar.appendChild(action);
+    });
+  };
+  syncXpQqSidebarActions();
+  const sidebarActionsObserver = new MutationObserver(syncXpQqSidebarActions);
+  sidebarActionsObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-heige-codex-skin"],
+    childList: true,
+    subtree: true,
+  });
+  trackedObservers.add(sidebarActionsObserver);
+
+  /* Present native project/thread rows as a QQ recent-contact list. Keep the
+   * original nodes and event handlers; only add stable metadata and one
+   * pointer-inert presence dot derived from real runtime state. */
+  clearXpQqContacts = () => {
+    for (const node of document.querySelectorAll(
+      '[data-heige-contact-generation="' + generation + '"]',
+    )) {
+      if (node.dataset.heigeRole === "xp-qq-contact-presence") {
+        node.remove();
+        continue;
+      }
+      delete node.dataset.heigeRole;
+      delete node.dataset.heigeContactGeneration;
+      delete node.dataset.heigeContactInitial;
+      delete node.dataset.heigeContactTone;
+      delete node.dataset.heigeContactProject;
+      delete node.dataset.heigeContactStatus;
+      delete node.dataset.heigeContactState;
+      delete node.dataset.heigeContactCount;
+    }
+  };
+  const setContactData = (node, key, value) => {
+    if (node.dataset[key] !== value) node.dataset[key] = value;
+  };
+  const contactProjectName = (row) => {
+    const label = row.closest('[role="list"]')?.getAttribute("aria-label") ?? "";
+    const suffix = "中的已安排任务";
+    return label.endsWith(suffix) ? label.slice(0, -suffix.length) : "本地工作区";
+  };
+  const syncXpQqContacts = () => {
+    if (!isCurrent()) return;
+    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    if (!xpQqActive) {
+      clearXpQqContacts();
+      return;
+    }
+
+    const projectLists = [...document.querySelectorAll(
+      "[data-app-action-sidebar-project-list-id]",
+    )];
+    for (const project of document.querySelectorAll("[data-app-action-sidebar-project-row]")) {
+      const projectId = project.dataset.appActionSidebarProjectId ?? "";
+      const projectList = projectLists.find((candidate) => (
+        candidate.dataset.appActionSidebarProjectListId === projectId
+      ));
+      const count = projectList?.querySelectorAll("[data-app-action-sidebar-thread-row]").length ?? 0;
+      setContactData(project, "heigeRole", "xp-qq-contact-group");
+      setContactData(project, "heigeContactGeneration", generation);
+      setContactData(project, "heigeContactCount", String(count));
+    }
+
+    for (const row of document.querySelectorAll("[data-app-action-sidebar-thread-row]")) {
+      const title = row.dataset.appActionSidebarThreadTitle
+        || row.querySelector("[data-thread-title]")?.textContent
+        || "Codex";
+      const threadId = row.dataset.appActionSidebarThreadId ?? title;
+      const project = contactProjectName(row);
+      const identity = deriveXpQqContactIdentity(title, threadId);
+      const running = row.querySelector(".animate-spin") !== null;
+      const active = row.dataset.appActionSidebarThreadActive === "true";
+      const pinned = row.dataset.appActionSidebarThreadPinned === "true";
+      const state = running ? "running" : active ? "active" : pinned ? "pinned" : "idle";
+      const status = xpQqContactStatus(state);
+      setContactData(row, "heigeRole", "xp-qq-contact");
+      setContactData(row, "heigeContactGeneration", generation);
+      setContactData(row, "heigeContactInitial", identity.initial);
+      setContactData(row, "heigeContactTone", String(identity.tone));
+      setContactData(row, "heigeContactProject", project);
+      setContactData(row, "heigeContactStatus", status);
+      setContactData(row, "heigeContactState", state);
+
+      let presence = row.querySelector(':scope > [data-heige-role="xp-qq-contact-presence"]');
+      if (state !== "running" && state !== "active") {
+        presence?.remove();
+        continue;
+      }
+      if (!presence) {
+        presence = document.createElement("span");
+        presence.dataset.heigeRole = "xp-qq-contact-presence";
+        presence.dataset.heigeContactGeneration = generation;
+        presence.setAttribute("aria-hidden", "true");
+        row.appendChild(presence);
+      }
+      setContactData(presence, "heigeContactState", state);
+    }
+  };
+  syncXpQqContacts();
+  const contactObserver = new MutationObserver(syncXpQqContacts);
+  contactObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: [
+      "data-heige-codex-skin",
+      "data-app-action-sidebar-thread-active",
+      "data-app-action-sidebar-thread-pinned",
+      "aria-expanded",
+      "class",
+    ],
+    childList: true,
+    subtree: true,
+  });
+  trackedObservers.add(contactObserver);
+
   const fileTitle = document.createElement("div");
   fileTitle.id = data.fileTitleId;
   fileTitle.dataset.heigeGeneration = generation;
@@ -870,6 +1366,126 @@ export function buildSkinMenuScript({
     subtree: true,
   });
   trackedObservers.add(fileTitleObserver);
+
+  /* The empty task surface is rendered as a centered home-page hero by Codex.
+   * Mark only that native surface so the XP QQ stylesheet can present the
+   * existing heading and working suggestion buttons as a chat transcript. */
+  const markXpQqWelcomeRole = (node, role) => {
+    if (!node) return;
+    if (node.dataset.heigeRole !== role) node.dataset.heigeRole = role;
+    if (node.dataset.heigeWelcomeGeneration !== generation) {
+      node.dataset.heigeWelcomeGeneration = generation;
+    }
+  };
+  clearXpQqWelcomeRoles = () => {
+    for (const node of document.querySelectorAll(
+      '[data-heige-welcome-generation="' + generation + '"]',
+    )) {
+      delete node.dataset.heigeRole;
+      delete node.dataset.heigeWelcomeGeneration;
+    }
+  };
+  let xpQqWelcomeSection = null;
+  const syncXpQqWelcome = () => {
+    if (!isCurrent()) return;
+    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    const section = xpQqActive
+      ? document.querySelector('section[class*="group/home-suggestions"]')
+      : null;
+    const suggestions = section?.parentElement ?? null;
+    const welcome = suggestions?.parentElement ?? null;
+    const message = welcome?.firstElementChild ?? null;
+    const space = welcome?.parentElement ?? null;
+    const replies = section?.querySelector("button")?.parentElement?.parentElement ?? null;
+    if (!section || !suggestions || !welcome || !message || !space || !replies) {
+      if (xpQqWelcomeSection !== null) clearXpQqWelcomeRoles();
+      xpQqWelcomeSection = null;
+      return;
+    }
+    if (xpQqWelcomeSection !== section) clearXpQqWelcomeRoles();
+    xpQqWelcomeSection = section;
+    markXpQqWelcomeRole(space, "xp-qq-welcome-space");
+    markXpQqWelcomeRole(welcome, "xp-qq-welcome");
+    markXpQqWelcomeRole(message, "xp-qq-welcome-message");
+    markXpQqWelcomeRole(suggestions, "xp-qq-welcome-suggestions");
+    markXpQqWelcomeRole(section, "xp-qq-quick-replies");
+    markXpQqWelcomeRole(replies, "xp-qq-quick-replies-grid");
+    for (const reply of section.querySelectorAll("button")) {
+      markXpQqWelcomeRole(reply, "xp-qq-quick-reply");
+    }
+  };
+  syncXpQqWelcome();
+  const welcomeObserver = new MutationObserver(syncXpQqWelcome);
+  welcomeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-heige-codex-skin"],
+    childList: true,
+    subtree: true,
+  });
+  trackedObservers.add(welcomeObserver);
+
+  /* Codex renders review diffs inside an open shadow root. Its generated
+   * dark palette cannot be corrected from the document stylesheet alone. */
+  const diffShadowStyleId = "heige-xp-qq-diff-shadow-style";
+  const xpQqDiffShadowCss = [
+    "@layer base {",
+    ":host { color-scheme: light !important; color: #20364a !important; background-color: #ffffff !important; --diffs-bg: #ffffff !important; --diffs-fg: #20364a !important; --diffs-dark: #20364a !important; --diffs-light: #20364a !important; }",
+    ":is([data-diff], [data-file]) { --diffs-bg: #ffffff !important; --diffs-fg: #20364a !important; --diffs-mixer: #20364a !important; --diffs-addition-base: #2f8f61 !important; --diffs-deletion-base: #c94f52 !important; --diffs-addition-color: #176a45 !important; --diffs-deletion-color: #a92f35 !important; --diffs-bg-addition: #e8f5ee !important; --diffs-bg-deletion: #fdeceb !important; --diffs-bg-addition-emphasis: #cfe9db !important; --diffs-bg-deletion-emphasis: #f5d4d2 !important; --diffs-bg-context: #ffffff !important; --diffs-bg-context-gutter: #f5f9fc !important; --diffs-bg-buffer: #f5f9fc !important; --diffs-bg-separator: #e6eef4 !important; --diffs-fg-number: #6f8394 !important; }",
+    "[data-line-type='change-addition']:is([data-line], [data-no-newline]) { --diffs-computed-diff-line-bg: #e8f5ee !important; }",
+    "[data-line-type='change-deletion']:is([data-line], [data-no-newline]) { --diffs-computed-diff-line-bg: #fdeceb !important; }",
+    "[data-code] [data-line] span { color: #20364a !important; }",
+    "[data-code] [data-line-type='change-addition'][data-line] span { color: #204f39 !important; }",
+    "[data-code] [data-line-type='change-deletion'][data-line] span { color: #6f3033 !important; }",
+    "}",
+  ].join("");
+  const observedDiffShadows = new WeakSet();
+  const removeXpQqDiffShadowStyles = () => {
+    for (const shadowStyle of trackedDiffShadowStyles) {
+      try { shadowStyle.remove(); } catch {}
+    }
+    trackedDiffShadowStyles.clear();
+    for (const diffHost of document.querySelectorAll("diffs-container")) {
+      try { diffHost.shadowRoot?.getElementById(diffShadowStyleId)?.remove(); } catch {}
+    }
+  };
+  const syncXpQqDiffShadows = () => {
+    if (!isCurrent()) return;
+    if (document.documentElement.dataset.heigeCodexSkin !== "xp-qq") {
+      removeXpQqDiffShadowStyles();
+      return;
+    }
+    for (const diffHost of document.querySelectorAll("diffs-container")) {
+      const shadow = diffHost.shadowRoot;
+      if (!shadow) continue;
+      if (!observedDiffShadows.has(shadow)) {
+        const diffShadowObserver = new MutationObserver(syncXpQqDiffShadows);
+        diffShadowObserver.observe(shadow, { childList: true });
+        trackedObservers.add(diffShadowObserver);
+        observedDiffShadows.add(shadow);
+      }
+      let shadowStyle = shadow.getElementById(diffShadowStyleId);
+      if (!shadowStyle) {
+        shadowStyle = document.createElement("style");
+        shadowStyle.id = diffShadowStyleId;
+        shadow.appendChild(shadowStyle);
+      }
+      shadowStyle.dataset.heigeGeneration = generation;
+      if (shadowStyle.textContent !== xpQqDiffShadowCss) {
+        shadowStyle.textContent = xpQqDiffShadowCss;
+      }
+      if (shadow.lastElementChild !== shadowStyle) shadow.appendChild(shadowStyle);
+      trackedDiffShadowStyles.add(shadowStyle);
+    }
+  };
+  syncXpQqDiffShadows();
+  const diffShadowObserver = new MutationObserver(syncXpQqDiffShadows);
+  diffShadowObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-heige-codex-skin"],
+    childList: true,
+    subtree: true,
+  });
+  trackedObservers.add(diffShadowObserver);
 
   const native = row("\\u539f\\u751f\\u754c\\u9762", "rgba(0,0,0,.24)", () => {
     void requestThemeSelection(data.nativeSel).then((applied) => {
@@ -1372,6 +1988,11 @@ export function buildSkinMenuScript({
         }
       } else if (event.key === data.hiddenKey && (event.newValue === "1" || event.newValue === null)) {
         setHidden(event.newValue === "1", false, false);
+      } else if (event.key === data.profile.storageKey) {
+        const profile = event.newValue === null
+          ? { ...data.profile.defaults }
+          : readStoredProfile(event.newValue);
+        if (profile) applyXpQqProfile(profile);
       }
     } catch {}
   });

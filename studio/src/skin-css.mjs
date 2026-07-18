@@ -179,9 +179,9 @@ function buildVariantCss(id, heroDataUrl) {
   top: 46px;
   right: 0;
   left: 0;
-  height: 78px;
-  padding: 39px 68px 0 66px;
-  content: "在线 · 正在处理任务";
+  height: 92px;
+  padding: 0;
+  content: "";
   color: #173f63;
   border-bottom: 1px solid #a9c8df;
   background: linear-gradient(180deg, #f8fcff, #d8ebfa);
@@ -220,7 +220,7 @@ function buildVariantCss(id, heroDataUrl) {
 
 :root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel > .max-w-full {
   box-sizing: border-box;
-  padding-top: 78px;
+  padding-top: 92px;
 }
 
 :root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel div:has(> button[aria-label^="切换模式"]) {
@@ -265,8 +265,182 @@ function buildVariantCss(id, heroDataUrl) {
 }
 
 #heige-xp-qq-avatar-editor,
-#heige-xp-qq-avatar-notice {
+#heige-xp-qq-avatar-notice,
+#heige-xp-qq-profile,
+#heige-xp-qq-profile-panel {
   display: none;
+}
+
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-profile {
+  position: fixed;
+  z-index: 27;
+  top: 84px;
+  left: 66px;
+  display: grid;
+  box-sizing: border-box;
+  width: 226px;
+  height: 50px;
+  padding: 0;
+  grid-template-rows: 18px 16px 16px;
+  align-items: center;
+  color: #173f63;
+  -webkit-app-region: no-drag;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-heading-row"] {
+  display: flex;
+  width: fit-content;
+  max-width: 176px;
+  min-width: 0;
+  gap: 4px;
+  align-items: center;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-nickname"],
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-signature"],
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-level"] {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-nickname"] {
+  max-width: 150px;
+  flex: 0 1 auto;
+  color: #173f63;
+  font: 700 13px/1.2 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-signature"] {
+  color: #58748a;
+  font: 11px/1.2 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-level"] {
+  color: #b56e16;
+  font: 11px/1.2 Tahoma, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  letter-spacing: 1px;
+}
+
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-profile-editor {
+  position: static;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  padding: 0;
+  place-items: center;
+  cursor: pointer;
+  color: #4f7089;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  font: 700 13px/1 Tahoma, sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-profile-editor:hover,
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-profile-editor[aria-expanded="true"] {
+  color: #174f7b;
+  border-color: #a8c5da;
+  background: rgba(255, 255, 255, .76);
+}
+
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-profile-editor:focus-visible {
+  outline: 2px solid #4a91cc;
+  outline-offset: 1px;
+}
+
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-profile-panel:not([hidden]) {
+  position: fixed;
+  z-index: 90;
+  top: 140px;
+  left: 64px;
+  display: grid;
+  box-sizing: border-box;
+  width: 286px;
+  padding: 11px;
+  gap: 8px;
+  color: #29475f;
+  border: 1px solid #8eafc8;
+  border-radius: 4px;
+  background: #f8fbfe;
+  box-shadow: 1px 3px 10px rgba(35, 73, 101, .24), inset 0 1px #fff;
+  font: 11px/1.35 Tahoma, "Microsoft YaHei", sans-serif;
+  -webkit-app-region: no-drag;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-heading"] {
+  color: #173f63;
+  font-size: 13px;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-field"] {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-field"] > span {
+  color: #58748a;
+  text-align: right;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-field"] input,
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-field"] select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 28px;
+  min-width: 0;
+  padding: 3px 7px;
+  color: #20364a;
+  border: 1px solid #a9c5d9;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(52, 88, 115, .08);
+  font: 11px/1.2 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-field"] input:focus,
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-field"] select:focus {
+  border-color: #4a91cc;
+  outline: 1px solid #b8d7ee;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-feedback"]:not([hidden]) {
+  display: block;
+  padding: 5px 7px;
+  color: #8a3733;
+  border: 1px solid #dfb0ad;
+  border-radius: 3px;
+  background: #fff2f1;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-actions"] {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-actions"] button {
+  min-width: 54px;
+  height: 26px;
+  padding: 0 10px;
+  color: #31536e;
+  border: 1px solid #a8c3d7;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fff, #e5f0f8);
+  box-shadow: inset 0 1px #fff;
+  font: 11px/1 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-profile-actions"] button[type="submit"] {
+  color: #fff;
+  border-color: #155d9f;
+  background: linear-gradient(180deg, #4a91cc, #2879bd);
 }
 
 :root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-avatar-editor {
@@ -349,39 +523,279 @@ function buildVariantCss(id, heroDataUrl) {
   color: #28475f !important;
 }
 
+/* QQ-style primary navigation: five native Codex actions in one tab strip. */
+:root[data-heige-codex-skin="xp-qq"] #heige-xp-qq-sidebar-actions {
+  position: relative;
+  z-index: 13;
+  display: grid !important;
+  min-height: 66px;
+  padding: 5px 7px 6px;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 2px;
+  color: #49677f;
+  border-bottom: 1px solid #aec9dc;
+  background: linear-gradient(180deg, #f8fcff, #dfedf7);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .9), inset 0 -1px #fff;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-actions-source"] {
+  display: none !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 56px !important;
+  height: 56px !important;
+  padding: 3px 1px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #49677f !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"]:hover,
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"]:focus-within {
+  color: #174f7b !important;
+  border-color: #9fc0d8 !important;
+  background: linear-gradient(180deg, #fff, #d9ebf8) !important;
+  box-shadow: inset 0 1px #fff !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] > span {
+  display: none !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] > button {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  color: inherit !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] > div,
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] > button > div {
+  display: flex !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  color: inherit !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-sidebar-action"] .text-fade-truncate {
+  display: block !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  color: inherit !important;
+  font: 600 11px/1.15 Tahoma, "Microsoft YaHei", sans-serif !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
 :root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel [data-app-action-sidebar-section-heading] *,
 :root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel [class*="text-token-input-placeholder"] {
   color: #647d91 !important;
 }
 
 :root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel button[data-app-action-sidebar-section-toggle] {
+  height: 28px !important;
+  padding: 0 10px !important;
   font-size: 0 !important;
 }
 
 :root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel button[data-app-action-sidebar-section-toggle]::after {
-  content: "我的会话";
+  content: "最近会话";
   color: #647d91;
   font: 600 11px/1 Tahoma, "Microsoft YaHei", sans-serif;
 }
 
-:root[data-heige-codex-skin="xp-qq"] [data-app-action-sidebar-thread-row],
-:root[data-heige-codex-skin="xp-qq"] [data-app-action-sidebar-project-row] {
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact-group"] {
+  position: relative !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  margin: 2px 0 0 !important;
+  padding: 0 30px 0 8px !important;
+  color: #48677f !important;
   border: 1px solid transparent;
-  border-radius: 2px !important;
+  border-width: 1px 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(180deg, rgba(248, 252, 255, .78), rgba(220, 236, 248, .68)) !important;
+  font: 600 11px/28px Tahoma, "Microsoft YaHei", sans-serif !important;
 }
 
-:root[data-heige-codex-skin="xp-qq"] [data-app-action-sidebar-thread-row]:hover,
-:root[data-heige-codex-skin="xp-qq"] [data-app-action-sidebar-project-row]:hover {
-  border-color: #b2cde1;
-  background: #f5faff !important;
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact-group"]::after {
+  position: absolute;
+  top: 0;
+  right: 9px;
+  content: attr(data-heige-contact-count);
+  color: #7b91a2;
+  font: 10px/28px Tahoma, sans-serif;
+  pointer-events: none;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact-group"]:hover {
+  color: #174f7b !important;
+  border-color: #b2cde1 !important;
+  background: linear-gradient(180deg, #fff, #e1eff9) !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact-group"] .text-fade-truncate {
+  color: inherit !important;
+  font: 600 11px/1.2 Tahoma, "Microsoft YaHei", sans-serif !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] .app-shell-left-panel [role="listitem"]::after {
+  display: none !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"] {
+  position: relative !important;
+  box-sizing: border-box !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  margin: 0 !important;
+  padding: 0 8px 0 50px !important;
+  overflow: hidden !important;
+  color: #29475f !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  transition: background-color 90ms ease, box-shadow 90ms ease;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"]::before {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  left: 8px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  box-sizing: border-box;
+  place-items: center;
+  content: attr(data-heige-contact-initial);
+  color: #fff;
+  border: 1px solid rgba(22, 78, 118, .42);
+  border-radius: 5px;
+  background: linear-gradient(145deg, #65a9d8, #2879bd);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .46), 0 1px 2px rgba(32, 70, 98, .15);
+  font: 700 14px/1 Tahoma, "Microsoft YaHei", sans-serif;
+  text-shadow: 0 1px rgba(15, 66, 105, .55);
+  pointer-events: none;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"]::after {
+  position: absolute;
+  z-index: 1;
+  top: 29px;
+  right: 58px;
+  left: 50px;
+  overflow: hidden;
+  content: attr(data-heige-contact-status);
+  color: #74899a;
+  font: 10.5px/15px Tahoma, "Microsoft YaHei", sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"] [data-thread-title-trigger] {
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 6px !important;
+  right: 58px !important;
+  left: 50px !important;
+  display: flex !important;
+  width: auto !important;
+  height: 20px !important;
+  min-width: 0 !important;
+  align-items: center !important;
+  color: #29475f !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"] [data-thread-title] {
+  overflow: hidden !important;
+  color: inherit !important;
+  font: 600 12px/20px Tahoma, "Microsoft YaHei", sans-serif !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"]:hover {
+  background: rgba(248, 252, 255, .92) !important;
+  box-shadow: inset 0 1px #d9e9f4, inset 0 -1px #d9e9f4 !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact-presence"] {
+  position: absolute;
+  z-index: 4;
+  top: 34px;
+  left: 34px;
+  display: block;
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border: 2px solid #edf6fd;
+  border-radius: 50%;
+  background: #2e9d62;
+  box-shadow: 0 0 0 1px rgba(25, 94, 60, .18);
+  pointer-events: none;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact-presence"][data-heige-contact-state="active"] {
+  background: #2879bd;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"][data-heige-contact-state="running"] {
+  color: #173f63 !important;
+  background: linear-gradient(180deg, #e5f3fd, #d2e9f9) !important;
+  box-shadow: inset 0 1px #fff, inset 0 -1px #b8d4e7 !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-contact"][data-heige-contact-state="running"]::after {
+  color: #2f7b58;
+  font-weight: 600;
 }
 
 :root[data-heige-codex-skin="xp-qq"] [data-app-action-sidebar-thread-active="true"] {
   color: #163f63 !important;
-  border: 1px solid #8fb7d5;
-  border-radius: 2px !important;
   background: linear-gradient(180deg, #dceefd, #c9e2f4) !important;
-  box-shadow: inset 0 1px rgba(255, 255, 255, .9);
+  box-shadow: inset 0 1px #fff, inset 0 -1px #8fb7d5 !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-contact-tone="1"]::before {
+  background: linear-gradient(145deg, #65aeb7, #2f7f8b);
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-contact-tone="2"]::before {
+  background: linear-gradient(145deg, #8299c1, #5874a4);
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-contact-tone="3"]::before {
+  background: linear-gradient(145deg, #6cafca, #3b86a8);
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-contact-tone="4"]::before {
+  background: linear-gradient(145deg, #8ca1b2, #60798e);
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-contact-tone="5"]::before {
+  background: linear-gradient(145deg, #76aa91, #4b8068);
 }
 
 :root[data-heige-codex-skin="xp-qq"] .main-surface,
@@ -474,6 +888,35 @@ function buildVariantCss(id, heroDataUrl) {
 
 :root[data-heige-codex-skin="xp-qq"] main [class*="bg-token-dropdown-background/50"] > * + * {
   border-color: #c8dbe9 !important;
+}
+
+/*
+ * The review renderer is a web component whose shadow root writes its own
+ * dark color scheme. Override the host and the inherited Pierre diff tokens
+ * together so syntax text, gutters, additions and deletions stay legible.
+ */
+:root[data-heige-codex-skin="xp-qq"] diffs-container {
+  color-scheme: light !important;
+  color: #20364a !important;
+  background-color: #ffffff !important;
+  --diffs-bg: #ffffff !important;
+  --diffs-fg: #20364a !important;
+  --diffs-dark: #20364a !important;
+  --diffs-light: #20364a !important;
+  --diffs-mixer: #20364a !important;
+  --diffs-addition-base: #2f8f61 !important;
+  --diffs-deletion-base: #c94f52 !important;
+  --diffs-addition-color: #176a45 !important;
+  --diffs-deletion-color: #a92f35 !important;
+  --diffs-bg-addition: #e8f5ee !important;
+  --diffs-bg-deletion: #fdeceb !important;
+  --diffs-bg-addition-emphasis: #cfe9db !important;
+  --diffs-bg-deletion-emphasis: #f5d4d2 !important;
+  --diffs-bg-context: #ffffff !important;
+  --diffs-bg-context-gutter: #f5f9fc !important;
+  --diffs-bg-buffer: #f5f9fc !important;
+  --diffs-bg-separator: #e6eef4 !important;
+  --diffs-fg-number: #6f8394 !important;
 }
 
 /* File tools read as an embedded XP utility window, not an unstyled white page. */
@@ -580,9 +1023,192 @@ function buildVariantCss(id, heroDataUrl) {
   background-color: rgba(95, 164, 214, .38) !important;
 }
 
+/* Empty tasks read as the first exchange in a QQ conversation, while every
+ * native suggestion remains the original, working Codex action. */
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-space"] {
+  min-height: 0 !important;
+  padding: 54px 32px 20px !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome"] {
+  display: flex !important;
+  width: min(100%, 860px) !important;
+  max-width: 860px !important;
+  padding: 0 24px !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome"]::before {
+  align-self: center;
+  margin-bottom: 22px;
+  padding: 3px 11px;
+  content: "本地工作区 · 新会话";
+  color: #7a8e9e;
+  border: 1px solid #d4e1ea;
+  border-radius: 10px;
+  background: #eef4f8;
+  font: 500 11px/1.2 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"] {
+  position: relative !important;
+  display: block !important;
+  width: min(710px, calc(100% - 44px)) !important;
+  min-height: 0 !important;
+  margin-left: 44px !important;
+  color: var(--qq-ink) !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"]::before {
+  display: block;
+  margin: 0 0 6px 1px;
+  content: "Codex 助手";
+  color: #60798d;
+  font: 600 11px/1.2 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"]::after {
+  position: absolute;
+  top: 19px;
+  left: -44px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  content: "C";
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 8px 8px 9px 5px;
+  background: linear-gradient(145deg, #4c9cd3, #236da6);
+  box-shadow: 0 1px 2px rgba(27, 70, 104, .22);
+  font: 800 12px/1 Tahoma, sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"] > div {
+  position: relative;
+  display: block !important;
+  width: auto !important;
+  min-height: 0 !important;
+  padding: 14px 16px !important;
+  color: #20364a !important;
+  border: 1px solid #bfd3e2;
+  border-radius: 5px 5px 5px 2px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(44, 78, 103, .09);
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"] > div::before {
+  display: block;
+  margin-bottom: 5px;
+  content: "你好，我已经准备好协助这个项目。";
+  color: #20364a;
+  font: 600 14px/1.5 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"] [data-testid="home-icon"] {
+  display: none !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"] > div > div {
+  display: block !important;
+  color: #60788b !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  text-align: left !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-message"] button {
+  color: #246fa9 !important;
+  font-weight: 650 !important;
+  text-decoration-color: #8eb5d0 !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-suggestions"] {
+  position: relative !important;
+  inset: auto !important;
+  width: min(710px, calc(100% - 44px)) !important;
+  margin: 16px 0 0 44px !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-suggestions"]::before {
+  display: block;
+  margin: 0 0 7px 1px;
+  content: "快捷回复";
+  color: #6d8293;
+  font: 600 11px/1.2 Tahoma, "Microsoft YaHei", sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-replies"] > div {
+  margin: 0 !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-replies"] > div > div {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-reply"] {
+  display: grid !important;
+  min-height: 58px !important;
+  height: auto !important;
+  padding: 9px 12px !important;
+  grid-template-columns: 27px minmax(0, 1fr) !important;
+  align-items: center !important;
+  color: #29475f !important;
+  border: 1px solid #bdd3e3 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #fff, #f2f8fc) !important;
+  box-shadow: inset 0 1px #fff, 0 1px 2px rgba(46, 82, 108, .07) !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-reply"]:hover {
+  border-color: #78a9cc !important;
+  background: #e6f3fc !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-reply"]:focus-visible {
+  outline: 2px solid #4a91cc !important;
+  outline-offset: 2px !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-reply"] > span:first-child {
+  width: 24px !important;
+  height: 24px !important;
+  color: #2879bd !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-reply"] > span:last-child {
+  min-height: 0 !important;
+  margin: 0 !important;
+  justify-content: center !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-reply"] > span:last-child > span {
+  color: #29475f !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+}
+
+@media (max-width: 980px) {
+  :root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-welcome-space"] {
+    padding-inline: 16px !important;
+  }
+
+  :root[data-heige-codex-skin="xp-qq"] [data-heige-role="xp-qq-quick-replies"] > div > div {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
 /* QQ-like message rows with clear sender identity. */
 :root[data-heige-codex-skin="xp-qq"] [data-user-message-bubble] {
   position: relative;
+  margin-top: 18px !important;
   margin-right: 44px !important;
   overflow: visible !important;
   color: #18364f !important;
@@ -590,6 +1216,23 @@ function buildVariantCss(id, heroDataUrl) {
   border-radius: 5px 5px 2px 5px !important;
   background: #dff1ff !important;
   box-shadow: 0 1px 2px rgba(38, 83, 117, .12) !important;
+}
+
+:root[data-heige-codex-skin="xp-qq"] [data-user-message-bubble]::before {
+  position: absolute;
+  top: -19px;
+  right: -42px;
+  display: block;
+  width: 128px;
+  height: 16px;
+  overflow: hidden;
+  content: attr(data-heige-xp-qq-nickname);
+  color: #58748a;
+  font: 11px/16px Tahoma, "Microsoft YaHei", sans-serif;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 :root[data-heige-codex-skin="xp-qq"] [data-user-message-bubble]::after {
@@ -607,6 +1250,16 @@ function buildVariantCss(id, heroDataUrl) {
   background: #3f8f69;
   box-shadow: 0 1px 2px rgba(28, 69, 51, .22);
   font: 700 12px/1 Tahoma, sans-serif;
+}
+
+:root[data-heige-codex-skin="xp-qq"][data-heige-xp-qq-avatar="custom"] [data-user-message-bubble]::after {
+  content: "" !important;
+  border-color: #fff !important;
+  background-color: #fff !important;
+  background-image: var(--heige-xp-qq-avatar-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: cover !important;
 }
 
 :root[data-heige-codex-skin="xp-qq"] [data-local-conversation-final-assistant],

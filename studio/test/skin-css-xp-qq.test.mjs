@@ -28,3 +28,98 @@ test("XP QQ CSS anchors the skin trigger and does not advertise fake composer to
   assert.doesNotMatch(css, /字体|表情|截图/);
   assert.doesNotMatch(css, /\.composer-surface-chrome::before/);
 });
+
+test("XP QQ CSS keeps the shadow-DOM review diff on a readable light palette", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /diffs-container \{[^}]*color-scheme: light !important/s);
+  assert.match(css, /diffs-container \{[^}]*--diffs-bg: #ffffff !important/s);
+  assert.match(css, /diffs-container \{[^}]*--diffs-fg: #20364a !important/s);
+  assert.match(css, /diffs-container \{[^}]*--diffs-bg-addition: #e8f5ee !important/s);
+  assert.match(css, /diffs-container \{[^}]*--diffs-bg-deletion: #fdeceb !important/s);
+  assert.match(css, /diffs-container \{[^}]*--diffs-bg-separator: #e6eef4 !important/s);
+});
+
+test("XP QQ CSS turns the empty home state into a compact chat welcome", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /\[data-heige-role="xp-qq-welcome-space"\]/);
+  assert.match(css, /\[data-heige-role="xp-qq-welcome-message"\]::before \{[^}]*content: "Codex 助手"/s);
+  assert.match(css, /\[data-heige-role="xp-qq-welcome-suggestions"\]::before \{[^}]*content: "快捷回复"/s);
+  assert.match(css, /\[data-heige-role="xp-qq-welcome-suggestions"\] \{[^}]*width: min\(710px, calc\(100% - 44px\)\) !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-quick-replies"\][^{]*> div > div \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(css, /\[data-heige-role="xp-qq-quick-reply"\] \{[^}]*min-height: 58px !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-welcome-message"\] \[data-testid="home-icon"\] \{[^}]*display: none !important/s);
+});
+
+test("XP QQ CSS reuses the custom profile image for user messages", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after/);
+  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*content: "" !important/s);
+  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-image: var\(--heige-xp-qq-avatar-image\) !important/s);
+  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-size: cover !important/s);
+});
+
+test("XP QQ CSS presents an editable compact identity profile", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /#heige-xp-qq-profile,\n#heige-xp-qq-profile-panel \{[^}]*display: none/s);
+  assert.match(css, /\.app-shell-left-panel::before \{[^}]*height: 92px/s);
+  assert.match(css, /\.app-shell-left-panel > \.max-w-full \{[^}]*padding-top: 92px/s);
+  assert.match(css, /#heige-xp-qq-profile \{[^}]*grid-template-rows: 18px 16px 16px/s);
+  assert.match(css, /\[data-heige-role="xp-qq-profile-heading-row"\] \{[^}]*display: flex/s);
+  assert.match(css, /\[data-heige-role="xp-qq-profile-heading-row"\] \{[^}]*gap: 4px/s);
+  assert.match(css, /\[data-heige-role="xp-qq-profile-nickname"\] \{[^}]*max-width: 150px/s);
+  assert.match(css, /#heige-xp-qq-profile-editor \{[^}]*position: static/s);
+  assert.match(css, /#heige-xp-qq-profile-editor \{[^}]*flex: 0 0 18px/s);
+  assert.match(css, /\[data-heige-role="xp-qq-profile-nickname"\],\n:root\[data-heige-codex-skin="xp-qq"\] \[data-heige-role="xp-qq-profile-signature"\],\n:root\[data-heige-codex-skin="xp-qq"\] \[data-heige-role="xp-qq-profile-level"\] \{[^}]*text-overflow: ellipsis/s);
+  assert.match(css, /#heige-xp-qq-profile-panel:not\(\[hidden\]\) \{[^}]*display: grid/s);
+  assert.match(css, /\[data-user-message-bubble\]::before \{[^}]*content: attr\(data-heige-xp-qq-nickname\)/s);
+  assert.match(css, /\[data-user-message-bubble\]::before \{[^}]*text-overflow: ellipsis/s);
+});
+
+test("XP QQ CSS presents primary sidebar actions as a five-tab QQ toolbar", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /#heige-xp-qq-sidebar-actions \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\) !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-sidebar-action"\] \{[^}]*min-height: 56px !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-sidebar-action"\][^{]*\.text-fade-truncate \{[^}]*font: 600 11px\/1\.15/s);
+  assert.match(css, /\[data-heige-role="xp-qq-sidebar-action"\][^{]*\.text-fade-truncate \{[^}]*white-space: nowrap !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-sidebar-actions-source"\] \{[^}]*display: none !important/s);
+});
+
+test("XP QQ CSS presents projects and threads as a recent-contact list", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /button\[data-app-action-sidebar-section-toggle\]::after \{[^}]*content: "最近会话"/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\] \{[^}]*height: 30px !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\]::after \{[^}]*content: attr\(data-heige-contact-count\)/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \{[^}]*height: 52px !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::before \{[^}]*content: attr\(data-heige-contact-initial\)/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::before \{[^}]*width: 34px/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::after \{[^}]*content: attr\(data-heige-contact-status\)/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \[data-thread-title-trigger\] \{[^}]*position: absolute !important/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact-presence"\] \{[^}]*width: 9px/s);
+  assert.match(css, /\[data-heige-role="xp-qq-contact"\]\[data-heige-contact-state="running"\] \{[^}]*background: linear-gradient/s);
+  assert.doesNotMatch(css, /\] \[data-heige-contact-state="running"\] \{/);
+  assert.match(css, /\[data-app-action-sidebar-thread-active="true"\] \{[^}]*background: linear-gradient/s);
+});
