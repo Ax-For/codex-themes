@@ -17,7 +17,7 @@ function rendererStatus({ controlRequest = null, themeId = "xp-qq" } = {}) {
       installed: true,
       generation,
       menu: true,
-      mode: themeId === "__heige_native__" ? "native" : "active",
+      mode: themeId === "__codex_themes_native__" ? "native" : "active",
       themeId,
       persistenceEnabled: true,
       revision: 7,
@@ -40,7 +40,7 @@ test("an in-flight repair never reinjects a stale theme after a renderer request
     action: "set-theme",
     capability: token,
     expectedRevision: 7,
-    themeId: "__heige_native__",
+    themeId: "__codex_themes_native__",
   };
   let pendingRequest = false;
   let releaseHealth;
@@ -73,7 +73,7 @@ test("an in-flight repair never reinjects a stale theme after a renderer request
       }
       healthInspectionStarted();
       await healthGate;
-      return rendererStatus({ themeId: "__heige_native__" });
+      return rendererStatus({ themeId: "__codex_themes_native__" });
     },
     injectSkin: async ({ themeId }) => { injectedThemes.push(themeId); },
     removeSkin: async () => {},

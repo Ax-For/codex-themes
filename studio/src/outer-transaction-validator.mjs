@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PRODUCT = "heige-codex-skin-studio";
+const PRODUCT = "codex-themes";
 
 const SHAPES = Object.freeze({
   "install-tree": {

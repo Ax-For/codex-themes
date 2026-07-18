@@ -3,12 +3,12 @@ import { createServer } from "node:http";
 
 const CONTROL_PATH = "/v1/persistence";
 const THEME_CONTROL_PATH = "/v1/theme";
-const NATIVE_THEME_ID = "__heige_native__";
+const NATIVE_THEME_ID = "__codex_themes_native__";
 const THEME_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const AUDITED_ORIGIN = "app://-";
 const PREFLIGHT_METHOD = "POST";
-const PREFLIGHT_HEADERS = ["content-type", "x-heige-control-token"];
-const RESPONSE_PREFLIGHT_HEADERS = "Content-Type, X-HeiGe-Control-Token";
+const PREFLIGHT_HEADERS = ["content-type", "x-codex-themes-control-token"];
+const RESPONSE_PREFLIGHT_HEADERS = "Content-Type, X-CodexThemes-Control-Token";
 const UTF8_DECODER = new TextDecoder("utf-8", { fatal: true });
 
 const SAFE_ERRORS = Object.freeze({
@@ -708,7 +708,7 @@ async function routePersistenceRequest(request, context, signal, markCommitStart
     return { status: 204, body: null, preflight: true };
   }
 
-  const suppliedToken = singleHeader(request, "x-heige-control-token");
+  const suppliedToken = singleHeader(request, "x-codex-themes-control-token");
   if (
     suppliedToken.count !== 1 ||
     !exactTokenMatches(suppliedToken.value, context.token)

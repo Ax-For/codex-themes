@@ -19,8 +19,8 @@ import { pathToFileURL } from "node:url";
 
 import { readProcessIdentity, sameProcessIdentity } from "./process-identity.mjs";
 
-export const INSTALL_MARKER_NAME = ".heige-install.json";
-export const INSTALL_PRODUCT = "heige-codex-skin-studio";
+export const INSTALL_MARKER_NAME = ".codex-themes-install.json";
+export const INSTALL_PRODUCT = "codex-themes";
 export const MAX_INSTALL_SOURCE_FILE_BYTES = 16 * 1024 * 1024;
 export const MAX_INSTALL_SOURCE_TREE_BYTES = 32 * 1024 * 1024;
 export const MAX_INSTALL_SOURCE_TREE_ENTRIES = 4096;
@@ -47,7 +47,7 @@ const OPTION1_DEPRECATED_ENABLE_ENTRYPOINT = [
   "#!/bin/zsh",
   "set -euo pipefail",
   "",
-  "# HEIGE_OPTION1_MENU_ONLY=1",
+  "# CODEX_THEMES_OPTION1_MENU_ONLY=1",
   "print -u2 -- \"此旧入口不再开启常驻。请运行项目安装脚本恢复当前主题，再在 Codex 顶部打开「皮肤常驻」开关。\"",
   "exit 64",
   "",
@@ -438,8 +438,8 @@ async function validateLegacyTree(root, {
   if (
     packageDocument?.name !== INSTALL_PRODUCT ||
     packageDocument?.type !== "module" ||
-    !exactKeys(packageDocument?.bin, ["heige-codex-skin"]) ||
-    packageDocument.bin["heige-codex-skin"] !== "src/cli.mjs"
+    !exactKeys(packageDocument?.bin, ["codex-themes"]) ||
+    packageDocument.bin["codex-themes"] !== "src/cli.mjs"
   ) {
     throw new Error("legacy package identity is invalid");
   }
@@ -468,7 +468,7 @@ async function validateLegacyTree(root, {
   })).bytes.toString("utf8");
   const isHistoricalEnable = enableText.includes("skin-watchdog.zsh")
     && enableText.includes("launchctl bootstrap")
-    && enableText.includes("com.heige.codex-skin-watchdog");
+    && enableText.includes("com.codex-themes.skin-watchdog");
   const isCurrentEnable = enableText.includes("run-cli.zsh")
     && enableText.includes("enable-skin");
   const isOption1DeprecatedEnable = enableText === OPTION1_DEPRECATED_ENABLE_ENTRYPOINT;
@@ -565,8 +565,8 @@ async function validateSourceRoot(sourceRoot) {
   if (
     packageDocument?.name !== INSTALL_PRODUCT
     || packageDocument?.type !== "module"
-    || !exactKeys(packageDocument?.bin, ["heige-codex-skin"])
-    || packageDocument.bin["heige-codex-skin"] !== "src/cli.mjs"
+    || !exactKeys(packageDocument?.bin, ["codex-themes"])
+    || packageDocument.bin["codex-themes"] !== "src/cli.mjs"
   ) throw new Error("source package identity is invalid");
   const cliPath = join(sourceRoot, "src", "cli.mjs");
   const cliInfo = await lstat(cliPath);
@@ -1633,7 +1633,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   cli(process.argv.slice(2))
     .then((result) => process.stdout.write(`${JSON.stringify(result)}\n`))
     .catch((error) => {
-      process.stderr.write(`HeiGe stable tree install failed: ${error.message}\n`);
+      process.stderr.write(`CodexThemes stable tree install failed: ${error.message}\n`);
       process.exitCode = 1;
     });
 }

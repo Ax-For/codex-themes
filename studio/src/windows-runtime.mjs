@@ -10,8 +10,8 @@ const PROCESS_STARTED_AT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,7}Z$/;
 const PROCESS_NAMES = new Set(["chatgpt", "codex"]);
 const APP_KINDS = new Set(["Win32", "StoreAlias", "StoreAumid"]);
 const TEST_FIXTURE_MAX_BYTES = 256 * 1024;
-const APP_IDENTITY_ENV = "HEIGE_WINDOWS_APP_IDENTITY";
-const APP_IDENTITY_PRODUCT = "heige-codex-skin-studio";
+const APP_IDENTITY_ENV = "CODEX_THEMES_WINDOWS_APP_IDENTITY";
+const APP_IDENTITY_PRODUCT = "codex-themes";
 const APP_IDENTITY_MAX_BYTES = 8 * 1024;
 const APP_IDENTITY_KEYS = [
   "aumid",
@@ -36,7 +36,7 @@ if (-not [int]::TryParse($PortText, [ref]$port) -or $port -lt 1 -or $port -gt 65
 }
 . $CommonScriptPath
 $app = if ($AppIdentityToken) {
-  Resolve-HeiGeBoundCodexApp -IdentityToken $AppIdentityToken
+  Resolve-CodexThemesBoundCodexApp -IdentityToken $AppIdentityToken
 } else {
   Resolve-CodexApp
 }
@@ -336,13 +336,13 @@ export async function queryWindowsRuntimeSnapshot({
   const expectedApp = identityToken === undefined
     ? null
     : decodeWindowsAppIdentityToken(identityToken);
-  const fixturePath = env.HEIGE_TEST_WINDOWS_RUNTIME_FIXTURE;
+  const fixturePath = env.CODEX_THEMES_TEST_WINDOWS_RUNTIME_FIXTURE;
   if (fixturePath !== undefined) {
     if (nodeEnv !== "test") {
       throw new Error("Windows runtime fixture is forbidden outside NODE_ENV=test");
     }
     const stateRoot = absoluteWindowsPath(
-      env.HEIGE_TEST_WINDOWS_STATE_ROOT,
+      env.CODEX_THEMES_TEST_WINDOWS_STATE_ROOT,
       "Windows test state root",
     );
     absoluteWindowsPath(fixturePath, "Windows runtime fixture path");

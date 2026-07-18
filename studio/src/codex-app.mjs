@@ -77,10 +77,10 @@ export async function resolveCodexApp({
   home = homedir(),
   exists = (path) => access(path).then(() => true, () => false),
 } = {}) {
-  const explicit = env.HEIGE_CODEX_APP;
+  const explicit = env.CODEX_THEMES_APP;
   if (explicit) {
     if (!(await exists(explicit))) {
-      throw new Error(`HEIGE_CODEX_APP does not exist: ${explicit}`);
+      throw new Error(`CODEX_THEMES_APP does not exist: ${explicit}`);
     }
     return {
       platform,

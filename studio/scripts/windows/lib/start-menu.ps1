@@ -1,12 +1,12 @@
-﻿# HeiGe Codex Skin Studio current-user Start Menu shortcut
+﻿# Codex Themes current-user Start Menu shortcut
 $ErrorActionPreference = "Stop"
-$script:HeiGeStartMenuProduct = "heige-codex-skin-studio"
-$script:HeiGeStartMenuDescription = "HeiGe Codex Skin Studio launcher v1 | current-user | re-enable skin"
-$script:HeiGeStartMenuArguments = ""
-$script:HeiGeStartMenuWindowStyle = 1
-$script:HeiGeStartMenuHotkey = ""
-$script:HeiGeStartMenuIconLocation = ""
-$script:HeiGeStartMenuParticipantKeys = @(
+$script:CodexThemesStartMenuProduct = "codex-themes"
+$script:CodexThemesStartMenuDescription = "Codex Themes launcher v1 | current-user | re-enable skin"
+$script:CodexThemesStartMenuArguments = ""
+$script:CodexThemesStartMenuWindowStyle = 1
+$script:CodexThemesStartMenuHotkey = ""
+$script:CodexThemesStartMenuIconLocation = ""
+$script:CodexThemesStartMenuParticipantKeys = @(
     "AfterSha256",
     "BackupPath",
     "BeforeSha256",
@@ -25,8 +25,8 @@ $script:HeiGeStartMenuParticipantKeys = @(
     "WorkingDirectory"
 )
 
-function Initialize-HeiGeUnicodeShellLink {
-    if ($null -ne ("HeiGe.CodexSkinStudio.Windows.UnicodeShellLinkV1" -as [type])) {
+function Initialize-CodexThemesUnicodeShellLink {
+    if ($null -ne ("CodexThemes.Windows.UnicodeShellLinkV1" -as [type])) {
         return
     }
     Add-Type -Language CSharp -ErrorAction Stop -TypeDefinition @'
@@ -36,7 +36,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace HeiGe.CodexSkinStudio.Windows
+namespace CodexThemes.Windows
 {
     [ComImport]
     [Guid("000214F9-0000-0000-C000-000000000046")]
@@ -333,7 +333,7 @@ namespace HeiGe.CodexSkinStudio.Windows
 '@
 }
 
-function Get-HeiGeStartMenuFullPath {
+function Get-CodexThemesStartMenuFullPath {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$Description
@@ -353,21 +353,21 @@ function Get-HeiGeStartMenuFullPath {
     return $fullPath.TrimEnd($separators)
 }
 
-function Get-HeiGeDefaultStartMenuRoot {
+function Get-CodexThemesDefaultStartMenuRoot {
     $path = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
     if ([string]::IsNullOrWhiteSpace($path)) {
         throw "无法解析当前用户的开始菜单目录。"
     }
-    return Get-HeiGeStartMenuFullPath -Path $path -Description "开始菜单目录"
+    return Get-CodexThemesStartMenuFullPath -Path $path -Description "开始菜单目录"
 }
 
-function Assert-HeiGeNoReparsePathComponents {
+function Assert-CodexThemesNoReparsePathComponents {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$Description,
         [scriptblock]$ItemProvider
     )
-    $fullPath = Get-HeiGeStartMenuFullPath -Path $Path -Description $Description
+    $fullPath = Get-CodexThemesStartMenuFullPath -Path $Path -Description $Description
     $rootPath = [System.IO.Path]::GetPathRoot($fullPath)
     if (-not $rootPath) { throw "$Description 无法解析文件系统根目录。" }
     if (-not $ItemProvider) {
@@ -405,14 +405,14 @@ function Assert-HeiGeNoReparsePathComponents {
     return $fullPath
 }
 
-function Get-HeiGeStartMenuShortcutPath {
+function Get-CodexThemesStartMenuShortcutPath {
     param([AllowNull()][string]$StartMenuRoot)
-    if (-not $StartMenuRoot) { $StartMenuRoot = Get-HeiGeDefaultStartMenuRoot }
-    $root = Get-HeiGeStartMenuFullPath -Path $StartMenuRoot -Description "开始菜单目录"
-    return (Join-Path $root "HeiGe Codex Skin Studio\HeiGe 皮肤启动器.lnk")
+    if (-not $StartMenuRoot) { $StartMenuRoot = Get-CodexThemesDefaultStartMenuRoot }
+    $root = Get-CodexThemesStartMenuFullPath -Path $StartMenuRoot -Description "开始菜单目录"
+    return (Join-Path $root "Codex Themes\Codex 主题启动器.lnk")
 }
 
-function ConvertFrom-HeiGeWshIconLocation {
+function ConvertFrom-CodexThemesWshIconLocation {
     param([AllowNull()][string]$IconLocation)
     if ([string]::IsNullOrEmpty($IconLocation) -or
         $IconLocation -match '^\s*,\s*0\s*$') {
@@ -421,15 +421,15 @@ function ConvertFrom-HeiGeWshIconLocation {
     return $IconLocation
 }
 
-function New-DefaultHeiGeShortcut {
+function New-DefaultCodexThemesShortcut {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$Target,
         [Parameter(Mandatory = $true)][string]$WorkingDirectory,
         [Parameter(Mandatory = $true)][string]$Description
     )
-    Initialize-HeiGeUnicodeShellLink
-    [HeiGe.CodexSkinStudio.Windows.UnicodeShellLinkV1]::Create(
+    Initialize-CodexThemesUnicodeShellLink
+    [CodexThemes.Windows.UnicodeShellLinkV1]::Create(
         $Path,
         $Target,
         $WorkingDirectory,
@@ -437,10 +437,10 @@ function New-DefaultHeiGeShortcut {
     )
 }
 
-function Read-DefaultHeiGeShortcut {
+function Read-DefaultCodexThemesShortcut {
     param([Parameter(Mandatory = $true)][string]$Path)
-    Initialize-HeiGeUnicodeShellLink
-    $shortcut = [HeiGe.CodexSkinStudio.Windows.UnicodeShellLinkV1]::Read($Path)
+    Initialize-CodexThemesUnicodeShellLink
+    $shortcut = [CodexThemes.Windows.UnicodeShellLinkV1]::Read($Path)
     return [pscustomobject][ordered]@{
         TargetPath = [string]$shortcut.TargetPath
         WorkingDirectory = [string]$shortcut.WorkingDirectory
@@ -448,12 +448,12 @@ function Read-DefaultHeiGeShortcut {
         Arguments = [string]$shortcut.Arguments
         WindowStyle = [int]$shortcut.WindowStyle
         Hotkey = [string]$shortcut.Hotkey
-        IconLocation = (ConvertFrom-HeiGeWshIconLocation `
+        IconLocation = (ConvertFrom-CodexThemesWshIconLocation `
             -IconLocation ([string]$shortcut.IconLocation))
     }
 }
 
-function Test-HeiGeSamePath {
+function Test-CodexThemesSamePath {
     param(
         [Parameter(Mandatory = $true)][string]$Left,
         [Parameter(Mandatory = $true)][string]$Right
@@ -467,7 +467,7 @@ function Test-HeiGeSamePath {
     }
 }
 
-function Test-HeiGePathAtOrWithin {
+function Test-CodexThemesPathAtOrWithin {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [Parameter(Mandatory = $true)][string]$Path
@@ -485,7 +485,7 @@ function Test-HeiGePathAtOrWithin {
     }
 }
 
-function Get-HeiGeShortcutHash {
+function Get-CodexThemesShortcutHash {
     param([Parameter(Mandatory = $true)][string]$Path)
     $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
     if ($item.PSIsContainer -or
@@ -509,7 +509,7 @@ function Get-HeiGeShortcutHash {
     }
 }
 
-function Get-HeiGeShortcutObservation {
+function Get-CodexThemesShortcutObservation {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$ExpectedTarget,
@@ -517,14 +517,14 @@ function Get-HeiGeShortcutObservation {
         [scriptblock]$ReadShortcutProvider
     )
     if (-not $ReadShortcutProvider) {
-        $ReadShortcutProvider = { param($Value) Read-DefaultHeiGeShortcut -Path $Value }
+        $ReadShortcutProvider = { param($Value) Read-DefaultCodexThemesShortcut -Path $Value }
     }
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         throw "快捷方式文件不存在：$Path"
     }
-    $beforeHash = Get-HeiGeShortcutHash -Path $Path
+    $beforeHash = Get-CodexThemesShortcutHash -Path $Path
     $observed = @(& $ReadShortcutProvider $Path)
-    $afterHash = Get-HeiGeShortcutHash -Path $Path
+    $afterHash = Get-CodexThemesShortcutHash -Path $Path
     if ($beforeHash -cne $afterHash) {
         throw "快捷方式在验证期间发生了变化：$Path"
     }
@@ -539,26 +539,26 @@ function Get-HeiGeShortcutObservation {
             throw "shortcut inspection result is missing $name"
         }
     }
-    if (-not (Test-HeiGeSamePath -Left ([string]$observed[0].TargetPath) -Right $ExpectedTarget)) {
+    if (-not (Test-CodexThemesSamePath -Left ([string]$observed[0].TargetPath) -Right $ExpectedTarget)) {
         throw "shortcut target path mismatch"
     }
-    if (-not (Test-HeiGeSamePath `
+    if (-not (Test-CodexThemesSamePath `
         -Left ([string]$observed[0].WorkingDirectory) -Right $ExpectedWorkingDirectory)) {
         throw "shortcut working directory mismatch"
     }
-    if ([string]$observed[0].Description -cne $script:HeiGeStartMenuDescription) {
+    if ([string]$observed[0].Description -cne $script:CodexThemesStartMenuDescription) {
         throw "shortcut description marker mismatch"
     }
-    if ([string]$observed[0].Arguments -cne $script:HeiGeStartMenuArguments) {
+    if ([string]$observed[0].Arguments -cne $script:CodexThemesStartMenuArguments) {
         throw "shortcut arguments mismatch"
     }
-    if ([int]$observed[0].WindowStyle -ne $script:HeiGeStartMenuWindowStyle) {
+    if ([int]$observed[0].WindowStyle -ne $script:CodexThemesStartMenuWindowStyle) {
         throw "shortcut window style mismatch"
     }
-    if ([string]$observed[0].Hotkey -cne $script:HeiGeStartMenuHotkey) {
+    if ([string]$observed[0].Hotkey -cne $script:CodexThemesStartMenuHotkey) {
         throw "shortcut hotkey mismatch"
     }
-    if ([string]$observed[0].IconLocation -cne $script:HeiGeStartMenuIconLocation) {
+    if ([string]$observed[0].IconLocation -cne $script:CodexThemesStartMenuIconLocation) {
         throw "shortcut icon location mismatch"
     }
     return [pscustomobject][ordered]@{
@@ -574,7 +574,7 @@ function Get-HeiGeShortcutObservation {
     }
 }
 
-function Get-HeiGeOwnedStartMenuShortcutObservation {
+function Get-CodexThemesOwnedStartMenuShortcutObservation {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$InstallRoot,
@@ -583,19 +583,19 @@ function Get-HeiGeOwnedStartMenuShortcutObservation {
     $workingDirectory = Join-Path $InstallRoot "scripts\windows"
     $currentTarget = Join-Path $workingDirectory "apply.bat"
     try {
-        return Get-HeiGeShortcutObservation -Path $Path -ExpectedTarget $currentTarget `
+        return Get-CodexThemesShortcutObservation -Path $Path -ExpectedTarget $currentTarget `
             -ExpectedWorkingDirectory $workingDirectory `
             -ReadShortcutProvider $ReadShortcutProvider
     } catch {
         if ($_.Exception.Message -cnotmatch "shortcut target path mismatch") { throw }
     }
     $legacyTarget = Join-Path $workingDirectory "enable-skin.bat"
-    return Get-HeiGeShortcutObservation -Path $Path -ExpectedTarget $legacyTarget `
+    return Get-CodexThemesShortcutObservation -Path $Path -ExpectedTarget $legacyTarget `
         -ExpectedWorkingDirectory $workingDirectory `
         -ReadShortcutProvider $ReadShortcutProvider
 }
 
-function Get-HeiGeStartMenuTransactionPaths {
+function Get-CodexThemesStartMenuTransactionPaths {
     param(
         [Parameter(Mandatory = $true)][string]$ShortcutPath,
         [Parameter(Mandatory = $true)][string]$TransactionId
@@ -608,13 +608,13 @@ function Get-HeiGeStartMenuTransactionPaths {
     }
 }
 
-function Assert-HeiGeStartMenuParticipant {
+function Assert-CodexThemesStartMenuParticipant {
     param([Parameter(Mandatory = $true)]$Participant)
     if ($null -eq $Participant -or $Participant -is [System.Array]) {
         throw "Start Menu participant 无效。"
     }
     $actualKeys = @($Participant.PSObject.Properties.Name | Sort-Object)
-    $expectedKeys = @($script:HeiGeStartMenuParticipantKeys | Sort-Object)
+    $expectedKeys = @($script:CodexThemesStartMenuParticipantKeys | Sort-Object)
     if ($actualKeys.Count -ne $expectedKeys.Count) {
         throw "Start Menu participant 字段不完整。"
     }
@@ -624,7 +624,7 @@ function Assert-HeiGeStartMenuParticipant {
         }
     }
     if ([int]$Participant.SchemaVersion -ne 1 -or
-        [string]$Participant.Product -cne $script:HeiGeStartMenuProduct) {
+        [string]$Participant.Product -cne $script:CodexThemesStartMenuProduct) {
         throw "Start Menu participant 产品归属无效。"
     }
     $transactionGuid = [guid]::Empty
@@ -642,34 +642,34 @@ function Assert-HeiGeStartMenuParticipant {
             throw "Start Menu participant $name 必须是布尔值。"
         }
     }
-    $installRoot = Get-HeiGeStartMenuFullPath `
+    $installRoot = Get-CodexThemesStartMenuFullPath `
         -Path ([string]$Participant.InstallRoot) -Description "安装目录"
-    $startMenuRoot = Get-HeiGeStartMenuFullPath `
+    $startMenuRoot = Get-CodexThemesStartMenuFullPath `
         -Path ([string]$Participant.StartMenuRoot) -Description "开始菜单目录"
-    Assert-HeiGeNoReparsePathComponents -Path $installRoot -Description "安装目录" | Out-Null
-    Assert-HeiGeNoReparsePathComponents -Path $startMenuRoot -Description "开始菜单目录" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $installRoot -Description "安装目录" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $startMenuRoot -Description "开始菜单目录" | Out-Null
     $commonPrograms = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonPrograms)
     if ($commonPrograms -and
-        (Test-HeiGePathAtOrWithin -Root $commonPrograms -Path $startMenuRoot)) {
+        (Test-CodexThemesPathAtOrWithin -Root $commonPrograms -Path $startMenuRoot)) {
         throw "Start Menu participant 不得指向机器级开始菜单。"
     }
-    $shortcutPath = Join-Path $startMenuRoot "HeiGe Codex Skin Studio\HeiGe 皮肤启动器.lnk"
+    $shortcutPath = Join-Path $startMenuRoot "Codex Themes\Codex 主题启动器.lnk"
     $folderPath = Split-Path $shortcutPath -Parent
     $currentTargetPath = Join-Path $installRoot "scripts\windows\apply.bat"
     $legacyTargetPath = Join-Path $installRoot "scripts\windows\enable-skin.bat"
     $targetPath = [string]$Participant.TargetPath
-    if (-not (Test-HeiGeSamePath -Left $targetPath -Right $currentTargetPath) -and
-        -not (Test-HeiGeSamePath -Left $targetPath -Right $legacyTargetPath)) {
+    if (-not (Test-CodexThemesSamePath -Left $targetPath -Right $currentTargetPath) -and
+        -not (Test-CodexThemesSamePath -Left $targetPath -Right $legacyTargetPath)) {
         throw "Start Menu participant 目标不是当前或受信旧版启动器。"
     }
     $workingDirectory = Split-Path $targetPath -Parent
-    $transactionPaths = Get-HeiGeStartMenuTransactionPaths `
+    $transactionPaths = Get-CodexThemesStartMenuTransactionPaths `
         -ShortcutPath $shortcutPath -TransactionId ($transactionGuid.ToString("D"))
     foreach ($path in @(
         $shortcutPath, $folderPath, $targetPath, $workingDirectory,
         $transactionPaths.StagePath, $transactionPaths.BackupPath
     )) {
-        Assert-HeiGeNoReparsePathComponents -Path $path -Description "Start Menu participant 路径" | Out-Null
+        Assert-CodexThemesNoReparsePathComponents -Path $path -Description "Start Menu participant 路径" | Out-Null
     }
     foreach ($check in @(
         @("ShortcutPath", $shortcutPath, [string]$Participant.ShortcutPath),
@@ -679,7 +679,7 @@ function Assert-HeiGeStartMenuParticipant {
         @("StagePath", $transactionPaths.StagePath, [string]$Participant.StagePath),
         @("BackupPath", $transactionPaths.BackupPath, [string]$Participant.BackupPath)
     )) {
-        if (-not (Test-HeiGeSamePath -Left ([string]$check[1]) -Right ([string]$check[2]))) {
+        if (-not (Test-CodexThemesSamePath -Left ([string]$check[1]) -Right ([string]$check[2]))) {
             throw "Start Menu participant 路径归属无效：$($check[0])"
         }
     }
@@ -702,23 +702,23 @@ function Assert-HeiGeStartMenuParticipant {
     return $Participant
 }
 
-function Assert-HeiGeStartMenuFolder {
+function Assert-CodexThemesStartMenuFolder {
     param([Parameter(Mandatory = $true)][string]$StartMenuRoot)
-    Assert-HeiGeNoReparsePathComponents -Path $StartMenuRoot -Description "开始菜单目录" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $StartMenuRoot -Description "开始菜单目录" | Out-Null
     $commonPrograms = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonPrograms)
     if ($commonPrograms -and
-        (Test-HeiGePathAtOrWithin -Root $commonPrograms -Path $StartMenuRoot)) {
+        (Test-CodexThemesPathAtOrWithin -Root $commonPrograms -Path $StartMenuRoot)) {
         throw "禁止写入机器级开始菜单：$StartMenuRoot"
     }
     [System.IO.Directory]::CreateDirectory($StartMenuRoot) | Out-Null
-    Assert-HeiGeNoReparsePathComponents -Path $StartMenuRoot -Description "开始菜单目录" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $StartMenuRoot -Description "开始菜单目录" | Out-Null
     $startMenuItem = Get-Item -LiteralPath $StartMenuRoot -Force -ErrorAction Stop
     if (($startMenuItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw "开始菜单目录不能是 reparse point：$StartMenuRoot"
     }
-    $folder = Join-Path $StartMenuRoot "HeiGe Codex Skin Studio"
+    $folder = Join-Path $StartMenuRoot "Codex Themes"
     [System.IO.Directory]::CreateDirectory($folder) | Out-Null
-    Assert-HeiGeNoReparsePathComponents -Path $folder -Description "开始菜单快捷方式目录" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $folder -Description "开始菜单快捷方式目录" | Out-Null
     $folderItem = Get-Item -LiteralPath $folder -Force -ErrorAction Stop
     if (($folderItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw "开始菜单快捷方式目录不能是 reparse point：$folder"
@@ -726,7 +726,7 @@ function Assert-HeiGeStartMenuFolder {
     return $folder
 }
 
-function Remove-HeiGePreparedStartMenuFolders {
+function Remove-CodexThemesPreparedStartMenuFolders {
     param(
         [Parameter(Mandatory = $true)][string]$FolderPath,
         [Parameter(Mandatory = $true)][bool]$FolderPriorExisted,
@@ -759,7 +759,7 @@ function Remove-HeiGePreparedStartMenuFolders {
     }
 }
 
-function Prepare-HeiGeStartMenuShortcut {
+function Prepare-CodexThemesStartMenuShortcut {
     param(
         [Parameter(Mandatory = $true)][string]$InstallRoot,
         [AllowNull()][string]$ValidationRoot,
@@ -768,8 +768,8 @@ function Prepare-HeiGeStartMenuShortcut {
         [scriptblock]$CreateShortcutProvider,
         [scriptblock]$ReadShortcutProvider
     )
-    $resolvedInstallRoot = Get-HeiGeStartMenuFullPath -Path $InstallRoot -Description "安装目录"
-    Assert-HeiGeNoReparsePathComponents -Path $resolvedInstallRoot -Description "安装目录" | Out-Null
+    $resolvedInstallRoot = Get-CodexThemesStartMenuFullPath -Path $InstallRoot -Description "安装目录"
+    Assert-CodexThemesNoReparsePathComponents -Path $resolvedInstallRoot -Description "安装目录" | Out-Null
     if (Test-Path -LiteralPath $resolvedInstallRoot) {
         $installItem = Get-Item -LiteralPath $resolvedInstallRoot -Force -ErrorAction Stop
         if (-not $installItem.PSIsContainer -or
@@ -778,14 +778,14 @@ function Prepare-HeiGeStartMenuShortcut {
         }
     }
     if (-not $ValidationRoot) { $ValidationRoot = $resolvedInstallRoot }
-    $resolvedValidationRoot = Get-HeiGeStartMenuFullPath `
+    $resolvedValidationRoot = Get-CodexThemesStartMenuFullPath `
         -Path $ValidationRoot -Description "验证目录"
-    Assert-HeiGeNoReparsePathComponents -Path $resolvedValidationRoot -Description "验证目录" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $resolvedValidationRoot -Description "验证目录" | Out-Null
     if (-not (Test-Path -LiteralPath $resolvedValidationRoot -PathType Container)) {
         throw "验证目录不存在：$resolvedValidationRoot"
     }
     $validationTarget = Join-Path $resolvedValidationRoot "scripts\windows\apply.bat"
-    Assert-HeiGeNoReparsePathComponents -Path $validationTarget -Description "快捷方式验证目标" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $validationTarget -Description "快捷方式验证目标" | Out-Null
     if (-not (Test-Path -LiteralPath $validationTarget -PathType Leaf)) {
         throw "快捷方式验证目标不存在：$validationTarget"
     }
@@ -794,7 +794,7 @@ function Prepare-HeiGeStartMenuShortcut {
         throw "快捷方式验证目标不能是 reparse point：$validationTarget"
     }
     $target = Join-Path $resolvedInstallRoot "scripts\windows\apply.bat"
-    Assert-HeiGeNoReparsePathComponents -Path $target -Description "快捷方式最终目标" | Out-Null
+    Assert-CodexThemesNoReparsePathComponents -Path $target -Description "快捷方式最终目标" | Out-Null
 
     if (-not $TransactionId) { $TransactionId = [guid]::NewGuid().ToString("D") }
     $guidValue = [guid]::Empty
@@ -803,15 +803,15 @@ function Prepare-HeiGeStartMenuShortcut {
         $guidValue.ToString("D") -cne $TransactionId) {
         throw "Start Menu transaction ID 必须是规范小写 GUID。"
     }
-    if (-not $StartMenuRoot) { $StartMenuRoot = Get-HeiGeDefaultStartMenuRoot }
-    $resolvedStartMenuRoot = Get-HeiGeStartMenuFullPath -Path $StartMenuRoot -Description "开始菜单目录"
-    Assert-HeiGeNoReparsePathComponents -Path $resolvedStartMenuRoot -Description "开始菜单目录" | Out-Null
+    if (-not $StartMenuRoot) { $StartMenuRoot = Get-CodexThemesDefaultStartMenuRoot }
+    $resolvedStartMenuRoot = Get-CodexThemesStartMenuFullPath -Path $StartMenuRoot -Description "开始菜单目录"
+    Assert-CodexThemesNoReparsePathComponents -Path $resolvedStartMenuRoot -Description "开始菜单目录" | Out-Null
     $startMenuRootPriorExisted = Test-Path -LiteralPath $resolvedStartMenuRoot
-    $folderPath = Join-Path $resolvedStartMenuRoot "HeiGe Codex Skin Studio"
+    $folderPath = Join-Path $resolvedStartMenuRoot "Codex Themes"
     $folderPriorExisted = Test-Path -LiteralPath $folderPath
     $commonPrograms = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonPrograms)
     if ($commonPrograms -and
-        (Test-HeiGePathAtOrWithin -Root $commonPrograms -Path $resolvedStartMenuRoot)) {
+        (Test-CodexThemesPathAtOrWithin -Root $commonPrograms -Path $resolvedStartMenuRoot)) {
         throw "禁止写入机器级开始菜单：$resolvedStartMenuRoot"
     }
     if ($startMenuRootPriorExisted) {
@@ -828,17 +828,17 @@ function Prepare-HeiGeStartMenuShortcut {
             throw "开始菜单快捷方式目录不安全：$folderPath"
         }
     }
-    $shortcutPath = Get-HeiGeStartMenuShortcutPath -StartMenuRoot $resolvedStartMenuRoot
+    $shortcutPath = Get-CodexThemesStartMenuShortcutPath -StartMenuRoot $resolvedStartMenuRoot
     $workingDirectory = Split-Path $target -Parent
     $priorExisted = Test-Path -LiteralPath $shortcutPath
     $beforeSha256 = $null
     if ($priorExisted) {
-        $before = Get-HeiGeOwnedStartMenuShortcutObservation -Path $shortcutPath `
+        $before = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $shortcutPath `
             -InstallRoot $resolvedInstallRoot -ReadShortcutProvider $ReadShortcutProvider
         $beforeSha256 = $before.Sha256
     }
 
-    $transactionPaths = Get-HeiGeStartMenuTransactionPaths `
+    $transactionPaths = Get-CodexThemesStartMenuTransactionPaths `
         -ShortcutPath $shortcutPath -TransactionId $TransactionId
     foreach ($path in @($transactionPaths.StagePath, $transactionPaths.BackupPath)) {
         if (Test-Path -LiteralPath $path) {
@@ -846,18 +846,18 @@ function Prepare-HeiGeStartMenuShortcut {
         }
     }
 
-    $description = $script:HeiGeStartMenuDescription
+    $description = $script:CodexThemesStartMenuDescription
     if (-not $CreateShortcutProvider) {
         $CreateShortcutProvider = {
             param($Path, $Target, $WorkingDirectory, $Description)
-            New-DefaultHeiGeShortcut -Path $Path -Target $Target `
+            New-DefaultCodexThemesShortcut -Path $Path -Target $Target `
                 -WorkingDirectory $WorkingDirectory -Description $Description
         }
     }
     try {
-        Assert-HeiGeStartMenuFolder -StartMenuRoot $resolvedStartMenuRoot | Out-Null
+        Assert-CodexThemesStartMenuFolder -StartMenuRoot $resolvedStartMenuRoot | Out-Null
         & $CreateShortcutProvider $transactionPaths.StagePath $target $workingDirectory $description | Out-Null
-        $staged = Get-HeiGeShortcutObservation -Path $transactionPaths.StagePath `
+        $staged = Get-CodexThemesShortcutObservation -Path $transactionPaths.StagePath `
             -ExpectedTarget $target -ExpectedWorkingDirectory $workingDirectory `
             -ReadShortcutProvider $ReadShortcutProvider
     } catch {
@@ -865,7 +865,7 @@ function Prepare-HeiGeStartMenuShortcut {
         $cleanupError = $null
         if (Test-Path -LiteralPath $transactionPaths.StagePath) {
             try {
-                Get-HeiGeShortcutHash -Path $transactionPaths.StagePath | Out-Null
+                Get-CodexThemesShortcutHash -Path $transactionPaths.StagePath | Out-Null
                 Remove-Item -LiteralPath $transactionPaths.StagePath -Force -ErrorAction Stop
             } catch {
                 $cleanupError = $_.Exception.Message
@@ -875,7 +875,7 @@ function Prepare-HeiGeStartMenuShortcut {
             throw "shortcut verification failed: $verificationError; staged cleanup failed: $cleanupError"
         }
         try {
-            Remove-HeiGePreparedStartMenuFolders -FolderPath $folderPath `
+            Remove-CodexThemesPreparedStartMenuFolders -FolderPath $folderPath `
                 -FolderPriorExisted ([bool]$folderPriorExisted) `
                 -StartMenuRoot $resolvedStartMenuRoot `
                 -StartMenuRootPriorExisted ([bool]$startMenuRootPriorExisted)
@@ -886,7 +886,7 @@ function Prepare-HeiGeStartMenuShortcut {
     }
     return [pscustomobject][ordered]@{
         SchemaVersion = 1
-        Product = $script:HeiGeStartMenuProduct
+        Product = $script:CodexThemesStartMenuProduct
         TransactionId = $TransactionId
         InstallRoot = $resolvedInstallRoot
         StartMenuRoot = $resolvedStartMenuRoot
@@ -904,14 +904,14 @@ function Prepare-HeiGeStartMenuShortcut {
     }
 }
 
-function Publish-HeiGeStartMenuShortcut {
+function Publish-CodexThemesStartMenuShortcut {
     param(
         [Parameter(Mandatory = $true)]$Participant,
         [scriptblock]$ReadShortcutProvider
     )
-    $participant = Assert-HeiGeStartMenuParticipant -Participant $Participant
-    Assert-HeiGeStartMenuFolder -StartMenuRoot $participant.StartMenuRoot | Out-Null
-    $staged = Get-HeiGeShortcutObservation -Path $participant.StagePath `
+    $participant = Assert-CodexThemesStartMenuParticipant -Participant $Participant
+    Assert-CodexThemesStartMenuFolder -StartMenuRoot $participant.StartMenuRoot | Out-Null
+    $staged = Get-CodexThemesShortcutObservation -Path $participant.StagePath `
         -ExpectedTarget $participant.TargetPath `
         -ExpectedWorkingDirectory $participant.WorkingDirectory `
         -ReadShortcutProvider $ReadShortcutProvider
@@ -922,13 +922,13 @@ function Publish-HeiGeStartMenuShortcut {
         throw "Start Menu backup path already exists"
     }
     if ($participant.PriorExisted) {
-        $before = Get-HeiGeOwnedStartMenuShortcutObservation -Path $participant.ShortcutPath `
+        $before = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $participant.ShortcutPath `
             -InstallRoot $participant.InstallRoot -ReadShortcutProvider $ReadShortcutProvider
         if ($before.Sha256 -cne [string]$participant.BeforeSha256) {
             throw "Start Menu existing shortcut changed after prepare"
         }
         Move-Item -LiteralPath $participant.ShortcutPath -Destination $participant.BackupPath
-        $backedUp = Get-HeiGeOwnedStartMenuShortcutObservation -Path $participant.BackupPath `
+        $backedUp = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $participant.BackupPath `
             -InstallRoot $participant.InstallRoot -ReadShortcutProvider $ReadShortcutProvider
         if ($backedUp.Sha256 -cne [string]$participant.BeforeSha256) {
             throw "Start Menu backup changed during publication"
@@ -937,7 +937,7 @@ function Publish-HeiGeStartMenuShortcut {
         throw "Start Menu destination appeared after prepare"
     }
     Move-Item -LiteralPath $participant.StagePath -Destination $participant.ShortcutPath
-    $published = Get-HeiGeShortcutObservation -Path $participant.ShortcutPath `
+    $published = Get-CodexThemesShortcutObservation -Path $participant.ShortcutPath `
         -ExpectedTarget $participant.TargetPath `
         -ExpectedWorkingDirectory $participant.WorkingDirectory `
         -ReadShortcutProvider $ReadShortcutProvider
@@ -951,12 +951,12 @@ function Publish-HeiGeStartMenuShortcut {
     }
 }
 
-function Rollback-HeiGeStartMenuShortcut {
+function Rollback-CodexThemesStartMenuShortcut {
     param(
         [Parameter(Mandatory = $true)]$Participant,
         [scriptblock]$ReadShortcutProvider
     )
-    $participant = Assert-HeiGeStartMenuParticipant -Participant $Participant
+    $participant = Assert-CodexThemesStartMenuParticipant -Participant $Participant
     $destinationExists = Test-Path -LiteralPath $participant.ShortcutPath
     $backupExists = Test-Path -LiteralPath $participant.BackupPath
     $stageExists = Test-Path -LiteralPath $participant.StagePath
@@ -965,13 +965,13 @@ function Rollback-HeiGeStartMenuShortcut {
         if (-not $participant.PriorExisted) {
             throw "Start Menu rollback found an impossible backup"
         }
-        $backup = Get-HeiGeOwnedStartMenuShortcutObservation -Path $participant.BackupPath `
+        $backup = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $participant.BackupPath `
             -InstallRoot $participant.InstallRoot -ReadShortcutProvider $ReadShortcutProvider
         if ($backup.Sha256 -cne [string]$participant.BeforeSha256) {
             throw "Start Menu rollback backup digest mismatch"
         }
         if ($destinationExists) {
-            $destination = Get-HeiGeShortcutObservation -Path $participant.ShortcutPath `
+            $destination = Get-CodexThemesShortcutObservation -Path $participant.ShortcutPath `
                 -ExpectedTarget $participant.TargetPath `
                 -ExpectedWorkingDirectory $participant.WorkingDirectory `
                 -ReadShortcutProvider $ReadShortcutProvider
@@ -981,7 +981,7 @@ function Rollback-HeiGeStartMenuShortcut {
             Remove-Item -LiteralPath $participant.ShortcutPath -Force
         }
         Move-Item -LiteralPath $participant.BackupPath -Destination $participant.ShortcutPath
-        $restored = Get-HeiGeOwnedStartMenuShortcutObservation -Path $participant.ShortcutPath `
+        $restored = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $participant.ShortcutPath `
             -InstallRoot $participant.InstallRoot -ReadShortcutProvider $ReadShortcutProvider
         if ($restored.Sha256 -cne [string]$participant.BeforeSha256) {
             throw "Start Menu rollback could not restore the prior shortcut"
@@ -990,13 +990,13 @@ function Rollback-HeiGeStartMenuShortcut {
         if (-not $destinationExists) {
             throw "Start Menu rollback cannot find the prior shortcut or its backup"
         }
-        $untouched = Get-HeiGeOwnedStartMenuShortcutObservation -Path $participant.ShortcutPath `
+        $untouched = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $participant.ShortcutPath `
             -InstallRoot $participant.InstallRoot -ReadShortcutProvider $ReadShortcutProvider
         if ($untouched.Sha256 -cne [string]$participant.BeforeSha256) {
             throw "Start Menu rollback refuses a changed prior shortcut"
         }
     } elseif ($destinationExists) {
-        $published = Get-HeiGeShortcutObservation -Path $participant.ShortcutPath `
+        $published = Get-CodexThemesShortcutObservation -Path $participant.ShortcutPath `
             -ExpectedTarget $participant.TargetPath `
             -ExpectedWorkingDirectory $participant.WorkingDirectory `
             -ReadShortcutProvider $ReadShortcutProvider
@@ -1007,7 +1007,7 @@ function Rollback-HeiGeStartMenuShortcut {
     }
 
     if ($stageExists) {
-        $staged = Get-HeiGeShortcutObservation -Path $participant.StagePath `
+        $staged = Get-CodexThemesShortcutObservation -Path $participant.StagePath `
             -ExpectedTarget $participant.TargetPath `
             -ExpectedWorkingDirectory $participant.WorkingDirectory `
             -ReadShortcutProvider $ReadShortcutProvider
@@ -1021,7 +1021,7 @@ function Rollback-HeiGeStartMenuShortcut {
             throw "Start Menu rollback left a transaction artifact: $path"
         }
     }
-    Remove-HeiGePreparedStartMenuFolders -FolderPath $participant.FolderPath `
+    Remove-CodexThemesPreparedStartMenuFolders -FolderPath $participant.FolderPath `
         -FolderPriorExisted ([bool]$participant.FolderPriorExisted) `
         -StartMenuRoot $participant.StartMenuRoot `
         -StartMenuRootPriorExisted ([bool]$participant.StartMenuRootPriorExisted)
@@ -1032,13 +1032,13 @@ function Rollback-HeiGeStartMenuShortcut {
     }
 }
 
-function Finalize-HeiGeStartMenuShortcut {
+function Finalize-CodexThemesStartMenuShortcut {
     param(
         [Parameter(Mandatory = $true)]$Participant,
         [scriptblock]$ReadShortcutProvider
     )
-    $participant = Assert-HeiGeStartMenuParticipant -Participant $Participant
-    $published = Get-HeiGeShortcutObservation -Path $participant.ShortcutPath `
+    $participant = Assert-CodexThemesStartMenuParticipant -Participant $Participant
+    $published = Get-CodexThemesShortcutObservation -Path $participant.ShortcutPath `
         -ExpectedTarget $participant.TargetPath `
         -ExpectedWorkingDirectory $participant.WorkingDirectory `
         -ReadShortcutProvider $ReadShortcutProvider
@@ -1046,7 +1046,7 @@ function Finalize-HeiGeStartMenuShortcut {
         throw "Start Menu finalize refuses a changed destination"
     }
     if (Test-Path -LiteralPath $participant.StagePath) {
-        $staged = Get-HeiGeShortcutObservation -Path $participant.StagePath `
+        $staged = Get-CodexThemesShortcutObservation -Path $participant.StagePath `
             -ExpectedTarget $participant.TargetPath `
             -ExpectedWorkingDirectory $participant.WorkingDirectory `
             -ReadShortcutProvider $ReadShortcutProvider
@@ -1057,7 +1057,7 @@ function Finalize-HeiGeStartMenuShortcut {
     }
     if (Test-Path -LiteralPath $participant.BackupPath) {
         if (-not $participant.PriorExisted) { throw "Start Menu finalize found an impossible backup" }
-        $backup = Get-HeiGeOwnedStartMenuShortcutObservation -Path $participant.BackupPath `
+        $backup = Get-CodexThemesOwnedStartMenuShortcutObservation -Path $participant.BackupPath `
             -InstallRoot $participant.InstallRoot -ReadShortcutProvider $ReadShortcutProvider
         if ($backup.Sha256 -cne [string]$participant.BeforeSha256) {
             throw "Start Menu finalize refuses a foreign backup shortcut"
@@ -1071,30 +1071,30 @@ function Finalize-HeiGeStartMenuShortcut {
     }
 }
 
-function Remove-HeiGeStartMenuShortcut {
+function Remove-CodexThemesStartMenuShortcut {
     param(
         [Parameter(Mandatory = $true)][string]$InstallRoot,
         [AllowNull()][string]$StartMenuRoot,
         [scriptblock]$ReadShortcutProvider
     )
-    $resolvedInstallRoot = Get-HeiGeStartMenuFullPath -Path $InstallRoot -Description "安装目录"
-    Assert-HeiGeNoReparsePathComponents -Path $resolvedInstallRoot -Description "安装目录" | Out-Null
-    if (-not $StartMenuRoot) { $StartMenuRoot = Get-HeiGeDefaultStartMenuRoot }
-    $resolvedStartMenuRoot = Get-HeiGeStartMenuFullPath -Path $StartMenuRoot -Description "开始菜单目录"
-    Assert-HeiGeNoReparsePathComponents -Path $resolvedStartMenuRoot -Description "开始菜单目录" | Out-Null
-    $shortcutPath = Get-HeiGeStartMenuShortcutPath -StartMenuRoot $resolvedStartMenuRoot
+    $resolvedInstallRoot = Get-CodexThemesStartMenuFullPath -Path $InstallRoot -Description "安装目录"
+    Assert-CodexThemesNoReparsePathComponents -Path $resolvedInstallRoot -Description "安装目录" | Out-Null
+    if (-not $StartMenuRoot) { $StartMenuRoot = Get-CodexThemesDefaultStartMenuRoot }
+    $resolvedStartMenuRoot = Get-CodexThemesStartMenuFullPath -Path $StartMenuRoot -Description "开始菜单目录"
+    Assert-CodexThemesNoReparsePathComponents -Path $resolvedStartMenuRoot -Description "开始菜单目录" | Out-Null
+    $shortcutPath = Get-CodexThemesStartMenuShortcutPath -StartMenuRoot $resolvedStartMenuRoot
     if (-not (Test-Path -LiteralPath $shortcutPath)) {
         return [pscustomobject][ordered]@{ PriorExisted = $false; Removed = $false; VerifiedAbsent = $true }
     }
-    Assert-HeiGeNoReparsePathComponents -Path $shortcutPath -Description "开始菜单快捷方式" | Out-Null
-    Get-HeiGeOwnedStartMenuShortcutObservation -Path $shortcutPath `
+    Assert-CodexThemesNoReparsePathComponents -Path $shortcutPath -Description "开始菜单快捷方式" | Out-Null
+    Get-CodexThemesOwnedStartMenuShortcutObservation -Path $shortcutPath `
         -InstallRoot $resolvedInstallRoot -ReadShortcutProvider $ReadShortcutProvider | Out-Null
     Remove-Item -LiteralPath $shortcutPath -Force
     if (Test-Path -LiteralPath $shortcutPath) { throw "快捷方式删除后仍存在：$shortcutPath" }
     return [pscustomobject][ordered]@{ PriorExisted = $true; Removed = $true; VerifiedAbsent = $true }
 }
 
-function Install-HeiGeStartMenuShortcut {
+function Install-CodexThemesStartMenuShortcut {
     param(
         [Parameter(Mandatory = $true)][string]$InstallRoot,
         [AllowNull()][string]$ValidationRoot,
@@ -1102,19 +1102,19 @@ function Install-HeiGeStartMenuShortcut {
         [scriptblock]$CreateShortcutProvider,
         [scriptblock]$ReadShortcutProvider
     )
-    $participant = Prepare-HeiGeStartMenuShortcut -InstallRoot $InstallRoot `
+    $participant = Prepare-CodexThemesStartMenuShortcut -InstallRoot $InstallRoot `
         -ValidationRoot $ValidationRoot -StartMenuRoot $StartMenuRoot `
         -CreateShortcutProvider $CreateShortcutProvider `
         -ReadShortcutProvider $ReadShortcutProvider
     try {
-        Publish-HeiGeStartMenuShortcut -Participant $participant `
+        Publish-CodexThemesStartMenuShortcut -Participant $participant `
             -ReadShortcutProvider $ReadShortcutProvider | Out-Null
-        Finalize-HeiGeStartMenuShortcut -Participant $participant `
+        Finalize-CodexThemesStartMenuShortcut -Participant $participant `
             -ReadShortcutProvider $ReadShortcutProvider | Out-Null
     } catch {
         $primaryError = $_.Exception.Message
         try {
-            Rollback-HeiGeStartMenuShortcut -Participant $participant `
+            Rollback-CodexThemesStartMenuShortcut -Participant $participant `
                 -ReadShortcutProvider $ReadShortcutProvider | Out-Null
         } catch {
             throw "shortcut publication failed: $primaryError; rollback failed: $($_.Exception.Message)"

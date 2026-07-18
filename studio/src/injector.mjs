@@ -7,8 +7,8 @@ import { classifyCodexTargets } from "./target-classifier.mjs";
 import { validateImageMetadata } from "./image-metadata.mjs";
 import { readBoundedFile, RESOURCE_LIMITS, sumWithinLimit } from "./resource-limits.mjs";
 
-const STYLE_ID = "heige-codex-skin-style";
-const MENU_ID = "heige-codex-skin-menu";
+const STYLE_ID = "codex-themes-skin-style";
+const MENU_ID = "codex-themes-skin-menu";
 const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
 async function waitForMainTargets(wait, port, { timeoutMs = 20_000, pollMs = 500 } = {}) {
   const deadline = Date.now() + timeoutMs;
@@ -250,13 +250,13 @@ export async function removeSkin({ port, deps = {} }) {
   const fetchTargets = deps.fetchRendererTargets ?? fetchRendererTargets;
   const Session = deps.Session ?? CdpSession;
   const expression = `(() => {
-    try { window.__heigeCodexSkinRuntime?.dispose?.(); } catch (error) {}
+    try { window.__codexThemesSkinRuntime?.dispose?.(); } catch (error) {}
     document.getElementById(${JSON.stringify(STYLE_ID)})?.remove();
     document.getElementById(${JSON.stringify(MENU_ID)})?.remove();
-    delete document.documentElement.dataset.heigeCodexSkin;
+    delete document.documentElement.dataset.codexThemesSkin;
     // 删掉脚本化 API，卸载后残留的闭包不再可达，避免污染 status/dataset
-    try { delete window.__heigeCodexSkin; } catch (error) { window.__heigeCodexSkin = undefined; }
-    try { delete window.__heigeCodexSkinRuntime; } catch (error) { window.__heigeCodexSkinRuntime = undefined; }
+    try { delete window.__codexThemesSkin; } catch (error) { window.__codexThemesSkin = undefined; }
+    try { delete window.__codexThemesSkinRuntime; } catch (error) { window.__codexThemesSkinRuntime = undefined; }
     return true;
   })()`;
   const classified = classifyCodexTargets(await fetchTargets(port));
@@ -303,10 +303,10 @@ export async function skinStatus({ port, includeControlRequest = false, deps = {
     const installed = Boolean(document.getElementById(${JSON.stringify(STYLE_ID)}));
     const menu = Boolean(document.getElementById(${JSON.stringify(MENU_ID)}));
     let status = null;
-    try { status = window.__heigeCodexSkinRuntime?.status?.() ?? null; } catch {}
+    try { status = window.__codexThemesSkinRuntime?.status?.() ?? null; } catch {}
     let generation = null;
     let mode = null;
-    let themeId = document.documentElement.dataset.heigeCodexSkin ?? null;
+    let themeId = document.documentElement.dataset.codexThemesSkin ?? null;
     let persistenceEnabled = false;
     let revision = 0;
     let controlRequest = null;

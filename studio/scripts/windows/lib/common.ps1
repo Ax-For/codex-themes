@@ -1,4 +1,4 @@
-﻿# HeiGe Codex Skin Studio 公共函数（Windows）
+﻿# Codex Themes 公共函数（Windows）
 $ErrorActionPreference = "Stop"
 
 function Get-ProgramFiles64 {
@@ -15,19 +15,19 @@ function Get-ProgramFiles64 {
 
 $script:ProgramFiles64 = Get-ProgramFiles64
 
-function Get-HeiGeFullPath {
+function Get-CodexThemesFullPath {
     param([Parameter(Mandatory = $true)][string]$Path)
     return [System.IO.Path]::GetFullPath($Path).TrimEnd([char[]]@('\', '/'))
 }
 
-function Test-HeiGePathWithin {
+function Test-CodexThemesPathWithin {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [Parameter(Mandatory = $true)][string]$Path
     )
     try {
-        $rootPath = Get-HeiGeFullPath -Path $Root
-        $candidate = Get-HeiGeFullPath -Path $Path
+        $rootPath = Get-CodexThemesFullPath -Path $Root
+        $candidate = Get-CodexThemesFullPath -Path $Path
     } catch {
         return $false
     }
@@ -56,7 +56,7 @@ function Select-CodexStorePackage {
     $plausible = @($Packages | Where-Object { Test-CodexPackageName -Package $_ -ProductName $ProductName })
     if ($InstallPath) {
         $matches = @($plausible | Where-Object {
-            $_.InstallLocation -and (Test-HeiGePathWithin -Root ([string]$_.InstallLocation) -Path $InstallPath)
+            $_.InstallLocation -and (Test-CodexThemesPathWithin -Root ([string]$_.InstallLocation) -Path $InstallPath)
         })
         if ($matches.Count -eq 1) { return $matches[0] }
         if ($matches.Count -gt 1) { throw "Windows Store 包选择不唯一：同一进程路径命中多个安装根。" }
@@ -111,10 +111,10 @@ function Select-CodexPackageApplication {
     } | Sort-Object Id, Executable)
     if ($candidates.Count -eq 0) { throw "Windows Store 包没有可归属的 Codex 应用入口。" }
     if ($ProcessPath) {
-        $processFullPath = Get-HeiGeFullPath -Path $ProcessPath
+        $processFullPath = Get-CodexThemesFullPath -Path $ProcessPath
         $candidates = @($candidates | Where-Object {
             if (-not $_.Executable) { return $false }
-            $entryPath = Get-HeiGeFullPath -Path (Join-Path ([string]$Package.InstallLocation) ([string]$_.Executable))
+            $entryPath = Get-CodexThemesFullPath -Path (Join-Path ([string]$Package.InstallLocation) ([string]$_.Executable))
             return $entryPath.Equals($processFullPath, [System.StringComparison]::OrdinalIgnoreCase)
         })
         if ($candidates.Count -eq 0) { throw "Windows Store 进程路径与包内应用入口不匹配：$ProcessPath" }
@@ -137,12 +137,12 @@ function Start-CodexViaActivation {
     param([string]$Aumid, [string]$Arguments)
     # IApplicationActivationManager：系统给打包应用传命令行参数的官方通道，
     # 不依赖「应用执行别名」（部分 Store 包根本没声明别名，设置页里不会出现开关）
-    if (-not ("HeiGe.AppActivation" -as [type])) {
+    if (-not ("CodexThemes.AppActivation" -as [type])) {
         Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 
-namespace HeiGe {
+namespace CodexThemes {
     [ComImport, Guid("2e941141-7f97-4756-ba1d-9decde894a3d"),
      InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IApplicationActivationManager {
@@ -176,7 +176,7 @@ namespace HeiGe {
 }
 "@
     }
-    return [HeiGe.AppActivation]::Launch($Aumid, $Arguments)
+    return [CodexThemes.AppActivation]::Launch($Aumid, $Arguments)
 }
 
 function Get-CodexProductName {
@@ -243,7 +243,7 @@ function Get-CodexAliasPath {
     $aliasRoot = Join-Path $env:LOCALAPPDATA ("Microsoft\WindowsApps\" + [string]$Package.PackageFamilyName)
     foreach ($name in $names) {
         $candidate = Join-Path $aliasRoot $name
-        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return (Get-HeiGeFullPath -Path $candidate) }
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return (Get-CodexThemesFullPath -Path $candidate) }
     }
     return $null
 }
@@ -256,7 +256,7 @@ function New-CodexStoreApp {
     $alias = Get-CodexAliasPath -Package $Package -Application $application
     $kind = if ($alias) { "StoreAlias" } else { "StoreAumid" }
     return New-CodexAppResult -Kind $kind -ExecutablePath $alias `
-        -InstallPath (Get-HeiGeFullPath -Path ([string]$Package.InstallLocation)) `
+        -InstallPath (Get-CodexThemesFullPath -Path ([string]$Package.InstallLocation)) `
         -ProductName $product -PackageFullName ([string]$Package.PackageFullName) -Aumid $aumid
 }
 
@@ -276,7 +276,7 @@ function Select-CodexWin32Path {
     $valid = @($Paths | Where-Object {
         $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) -and
         (Split-Path $_ -Leaf) -match '^(Codex|ChatGPT)\.exe$'
-    } | ForEach-Object { Get-HeiGeFullPath -Path $_ } | Select-Object -Unique)
+    } | ForEach-Object { Get-CodexThemesFullPath -Path $_ } | Select-Object -Unique)
     return $valid | Sort-Object @{ Expression = { Get-CodexVersionFromDirectory -Path $_ }; Descending = $true }, @{ Expression = { $_ }; Descending = $false } | Select-Object -First 1
 }
 
@@ -309,7 +309,7 @@ function Get-CodexWin32Candidates {
 
 function Resolve-CodexApp {
     param(
-        [AllowNull()][string]$OverridePath = $env:HEIGE_CODEX_APP,
+        [AllowNull()][string]$OverridePath = $env:CODEX_THEMES_APP,
         [object[]]$Packages,
         [scriptblock]$ProcessProvider,
         [AllowNull()][string]$ProductName
@@ -317,20 +317,20 @@ function Resolve-CodexApp {
     $packagesProvided = $PSBoundParameters.ContainsKey("Packages")
     if ($OverridePath) {
         if (-not (Test-Path -LiteralPath $OverridePath -PathType Leaf)) {
-            throw "环境变量 HEIGE_CODEX_APP 指向的文件不存在：$OverridePath"
+            throw "环境变量 CODEX_THEMES_APP 指向的文件不存在：$OverridePath"
         }
-        $fullOverride = Get-HeiGeFullPath -Path $OverridePath
+        $fullOverride = Get-CodexThemesFullPath -Path $OverridePath
         if ((Split-Path $fullOverride -Leaf) -notmatch '^(Codex|ChatGPT)\.exe$') {
-            throw "HEIGE_CODEX_APP 不是可归属的 Codex 可执行文件：$fullOverride"
+            throw "CODEX_THEMES_APP 不是可归属的 Codex 可执行文件：$fullOverride"
         }
         if (-not $packagesProvided) { $Packages = Get-CodexStorePackages }
         $Packages = @($Packages)
         $packageMatches = @($Packages | Where-Object {
             (Test-CodexPackageName -Package $_ -ProductName $ProductName) -and $_.InstallLocation -and
-            (Test-HeiGePathWithin -Root ([string]$_.InstallLocation) -Path $fullOverride)
+            (Test-CodexThemesPathWithin -Root ([string]$_.InstallLocation) -Path $fullOverride)
         })
         if ($packageMatches.Count -eq 1) { return New-CodexStoreApp -Package $packageMatches[0] -ProcessPath $fullOverride }
-        if ($packageMatches.Count -gt 1) { throw "Windows Store 包选择不唯一：HEIGE_CODEX_APP 同时命中多个安装根。" }
+        if ($packageMatches.Count -gt 1) { throw "Windows Store 包选择不唯一：CODEX_THEMES_APP 同时命中多个安装根。" }
         return New-CodexAppResult -Kind "Win32" -ExecutablePath $fullOverride `
             -InstallPath (Split-Path $fullOverride -Parent) `
             -ProductName (Get-CodexProductName -Path $fullOverride -Package $null) `
@@ -353,10 +353,10 @@ function Resolve-CodexApp {
             continue
         }
         if (-not $path -or -not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
-        $fullPath = Get-HeiGeFullPath -Path $path
+        $fullPath = Get-CodexThemesFullPath -Path $path
         $matches = @($Packages | Where-Object {
             (Test-CodexPackageName -Package $_ -ProductName $ProductName) -and $_.InstallLocation -and
-            (Test-HeiGePathWithin -Root ([string]$_.InstallLocation) -Path $fullPath)
+            (Test-CodexThemesPathWithin -Root ([string]$_.InstallLocation) -Path $fullPath)
         })
         if ($matches.Count -gt 1) { throw "Windows Store 包选择不唯一：进程路径命中多个安装根。" }
         if ($matches.Count -eq 1) {
@@ -394,7 +394,7 @@ function Resolve-CodexApp {
     return New-CodexStoreApp -Package $package -ProcessPath $null
 }
 
-function ConvertTo-HeiGeCodexAppIdentityDocument {
+function ConvertTo-CodexThemesCodexAppIdentityDocument {
     param([Parameter(Mandatory = $true)]$App)
     $expectedProperties = @("Aumid", "ExecutablePath", "InstallPath", "Kind", "PackageFullName", "ProductName")
     $actualProperties = @($App.PSObject.Properties.Name | Sort-Object)
@@ -412,14 +412,14 @@ function ConvertTo-HeiGeCodexAppIdentityDocument {
     if (-not $App.InstallPath -or -not [System.IO.Path]::IsPathRooted([string]$App.InstallPath)) {
         throw "Codex app identity install path is invalid."
     }
-    $installPath = Get-HeiGeFullPath -Path ([string]$App.InstallPath)
+    $installPath = Get-CodexThemesFullPath -Path ([string]$App.InstallPath)
     $executablePath = if ($null -eq $App.ExecutablePath) {
         $null
     } else {
         if (-not [System.IO.Path]::IsPathRooted([string]$App.ExecutablePath)) {
             throw "Codex app identity executable path is invalid."
         }
-        Get-HeiGeFullPath -Path ([string]$App.ExecutablePath)
+        Get-CodexThemesFullPath -Path ([string]$App.ExecutablePath)
     }
     $packageFullName = if ($null -eq $App.PackageFullName) { $null } else { [string]$App.PackageFullName }
     $aumid = if ($null -eq $App.Aumid) { $null } else { [string]$App.Aumid }
@@ -442,7 +442,7 @@ function ConvertTo-HeiGeCodexAppIdentityDocument {
     }
     return [pscustomobject][ordered]@{
         schemaVersion = 1
-        product = "heige-codex-skin-studio"
+        product = "codex-themes"
         kind = $kind
         executablePath = $executablePath
         installPath = $installPath
@@ -452,16 +452,16 @@ function ConvertTo-HeiGeCodexAppIdentityDocument {
     }
 }
 
-function ConvertTo-HeiGeCodexAppIdentityToken {
+function ConvertTo-CodexThemesCodexAppIdentityToken {
     param([Parameter(Mandatory = $true)]$App)
-    $document = ConvertTo-HeiGeCodexAppIdentityDocument -App $App
+    $document = ConvertTo-CodexThemesCodexAppIdentityDocument -App $App
     $json = $document | ConvertTo-Json -Depth 4 -Compress
     $utf8 = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $false, $true
     $base64 = [System.Convert]::ToBase64String($utf8.GetBytes($json))
     return $base64.TrimEnd([char[]]@('=')).Replace("+", "-").Replace("/", "_")
 }
 
-function ConvertFrom-HeiGeCodexAppIdentityToken {
+function ConvertFrom-CodexThemesCodexAppIdentityToken {
     param([Parameter(Mandatory = $true)][string]$IdentityToken)
     if ($IdentityToken.Length -le 0 -or $IdentityToken.Length -gt 16384 -or
         $IdentityToken -cnotmatch '^[A-Za-z0-9_-]+$') {
@@ -491,7 +491,7 @@ function ConvertFrom-HeiGeCodexAppIdentityToken {
     $actualProperties = @($document.PSObject.Properties.Name | Sort-Object)
     if (($actualProperties -join "`0") -cne (($expectedProperties | Sort-Object) -join "`0") -or
         [int]$document.schemaVersion -ne 1 -or
-        [string]$document.product -cne "heige-codex-skin-studio") {
+        [string]$document.product -cne "codex-themes") {
         throw "Codex app 身份 token schema 无效。"
     }
     $app = New-CodexAppResult -Kind ([string]$document.kind) `
@@ -499,20 +499,20 @@ function ConvertFrom-HeiGeCodexAppIdentityToken {
         -InstallPath ([string]$document.installPath) -ProductName ([string]$document.productName) `
         -PackageFullName $(if ($null -eq $document.packageFullName) { $null } else { [string]$document.packageFullName }) `
         -Aumid $(if ($null -eq $document.aumid) { $null } else { [string]$document.aumid })
-    $canonical = ConvertTo-HeiGeCodexAppIdentityToken -App $app
+    $canonical = ConvertTo-CodexThemesCodexAppIdentityToken -App $app
     if ($canonical -cne $IdentityToken) {
         throw "Codex app 身份 token 不是规范编码。"
     }
     return $app
 }
 
-function Test-HeiGeCodexAppIdentityEqual {
+function Test-CodexThemesCodexAppIdentityEqual {
     param(
         [Parameter(Mandatory = $true)]$Left,
         [Parameter(Mandatory = $true)]$Right
     )
-    $leftDocument = ConvertTo-HeiGeCodexAppIdentityDocument -App $Left
-    $rightDocument = ConvertTo-HeiGeCodexAppIdentityDocument -App $Right
+    $leftDocument = ConvertTo-CodexThemesCodexAppIdentityDocument -App $Left
+    $rightDocument = ConvertTo-CodexThemesCodexAppIdentityDocument -App $Right
     foreach ($name in @("kind", "productName", "packageFullName", "aumid")) {
         if ($leftDocument.$name -cne $rightDocument.$name) { return $false }
     }
@@ -530,7 +530,7 @@ function Test-HeiGeCodexAppIdentityEqual {
     return $true
 }
 
-function Resolve-HeiGeExactStoreCodexApp {
+function Resolve-CodexThemesExactStoreCodexApp {
     param(
         [Parameter(Mandatory = $true)]$Expected,
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Packages
@@ -546,7 +546,7 @@ function Resolve-HeiGeExactStoreCodexApp {
     if (-not $package.InstallLocation) {
         throw "已绑定 Store 包缺少不可变安装根。"
     }
-    $observedInstallPath = Get-HeiGeFullPath -Path ([string]$package.InstallLocation)
+    $observedInstallPath = Get-CodexThemesFullPath -Path ([string]$package.InstallLocation)
     if (-not $observedInstallPath.Equals(
         [string]$Expected.InstallPath,
         [System.StringComparison]::OrdinalIgnoreCase
@@ -572,18 +572,18 @@ function Resolve-HeiGeExactStoreCodexApp {
         -InstallPath $observedInstallPath `
         -ProductName (Get-CodexProductName -Path $null -Package $package) `
         -PackageFullName ([string]$package.PackageFullName) -Aumid $expectedAumid
-    if (-not (Test-HeiGeCodexAppIdentityEqual -Left $Expected -Right $observed)) {
+    if (-not (Test-CodexThemesCodexAppIdentityEqual -Left $Expected -Right $observed)) {
         throw "当前 Store Codex 与已绑定的不可变身份不一致。"
     }
     return $observed
 }
 
-function Resolve-HeiGeBoundCodexApp {
+function Resolve-CodexThemesBoundCodexApp {
     param(
         [Parameter(Mandatory = $true)][string]$IdentityToken,
         [object[]]$Packages
     )
-    $expected = ConvertFrom-HeiGeCodexAppIdentityToken -IdentityToken $IdentityToken
+    $expected = ConvertFrom-CodexThemesCodexAppIdentityToken -IdentityToken $IdentityToken
     if ([string]$expected.Kind -ceq "Win32") {
         $observed = if ($PSBoundParameters.ContainsKey("Packages")) {
             Resolve-CodexApp -OverridePath ([string]$expected.ExecutablePath) `
@@ -598,9 +598,9 @@ function Resolve-HeiGeBoundCodexApp {
         } else {
             @(Get-CodexStorePackages)
         }
-        $observed = Resolve-HeiGeExactStoreCodexApp -Expected $expected -Packages $currentPackages
+        $observed = Resolve-CodexThemesExactStoreCodexApp -Expected $expected -Packages $currentPackages
     }
-    if (-not (Test-HeiGeCodexAppIdentityEqual -Left $expected -Right $observed)) {
+    if (-not (Test-CodexThemesCodexAppIdentityEqual -Left $expected -Right $observed)) {
         throw "当前 Codex 归属与已绑定的不可变身份不一致。"
     }
     return $observed
@@ -634,7 +634,7 @@ function Get-NodeRuntime {
             $App = New-CodexAppResult -Kind "StoreAumid" -ExecutablePath $null -InstallPath "" `
                 -ProductName "Codex" -PackageFullName $null -Aumid $AppPath.Substring(6)
         } else {
-            $fullAppPath = Get-HeiGeFullPath -Path $AppPath
+            $fullAppPath = Get-CodexThemesFullPath -Path $AppPath
             $App = New-CodexAppResult -Kind "Win32" -ExecutablePath $fullAppPath `
                 -InstallPath (Split-Path $fullAppPath -Parent) `
                 -ProductName (Get-CodexProductName -Path $fullAppPath -Package $null) `
@@ -679,7 +679,7 @@ function Get-NodeRuntime {
         if ($versionText -notmatch '^v(\d+)\.(\d+)\.(\d+)(?:[-+].+)?$') { continue }
         if ([int]$Matches[1] -lt $MinimumSystemMajor) { continue }
         $runtime = [pscustomobject][ordered]@{
-            Path = Get-HeiGeFullPath -Path ([string]$candidate.Path)
+            Path = Get-CodexThemesFullPath -Path ([string]$candidate.Path)
             Source = [string]$candidate.Source
             Version = $versionText
         }
@@ -692,7 +692,7 @@ function Get-NodeRuntime {
     throw "Node.js 22 或更高版本才能运行控制器。"
 }
 
-function New-HeiGePrivateDirectoryAcl {
+function New-CodexThemesPrivateDirectoryAcl {
     param([Parameter(Mandatory = $true)][string]$UserSid)
     $sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $UserSid
     $acl = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
@@ -709,7 +709,7 @@ function New-HeiGePrivateDirectoryAcl {
     return $acl
 }
 
-function New-HeiGePrivateFileAcl {
+function New-CodexThemesPrivateFileAcl {
     param([Parameter(Mandatory = $true)][string]$UserSid)
     $sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $UserSid
     $acl = New-Object -TypeName System.Security.AccessControl.FileSecurity
@@ -724,7 +724,7 @@ function New-HeiGePrivateFileAcl {
     return $acl
 }
 
-function Protect-HeiGeStateDirectory {
+function Protect-CodexThemesStateDirectory {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [string]$CurrentUserSid,
@@ -738,7 +738,7 @@ function Protect-HeiGeStateDirectory {
     if (($root.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw "状态目录不能是 reparse point：$Path"
     }
-    $directoryAcl = New-HeiGePrivateDirectoryAcl -UserSid $CurrentUserSid
+    $directoryAcl = New-CodexThemesPrivateDirectoryAcl -UserSid $CurrentUserSid
     Set-Acl -LiteralPath $Path -AclObject $directoryAcl
 
     if (-not $ChildItemProvider) {
@@ -762,9 +762,9 @@ function Protect-HeiGeStateDirectory {
     }
     foreach ($item in $items) {
         $itemAcl = if ($item.PSIsContainer) {
-            New-HeiGePrivateDirectoryAcl -UserSid $CurrentUserSid
+            New-CodexThemesPrivateDirectoryAcl -UserSid $CurrentUserSid
         } else {
-            New-HeiGePrivateFileAcl -UserSid $CurrentUserSid
+            New-CodexThemesPrivateFileAcl -UserSid $CurrentUserSid
         }
         Set-Acl -LiteralPath $item.FullName -AclObject $itemAcl
     }
@@ -801,8 +801,8 @@ function Test-CdpOwnerMatchesApp {
     if (-not $Owner.Path) { return $false }
     if ($App.Kind -eq "Win32") {
         try {
-            return (Get-HeiGeFullPath -Path ([string]$Owner.Path)).Equals(
-                (Get-HeiGeFullPath -Path ([string]$App.ExecutablePath)),
+            return (Get-CodexThemesFullPath -Path ([string]$Owner.Path)).Equals(
+                (Get-CodexThemesFullPath -Path ([string]$App.ExecutablePath)),
                 [System.StringComparison]::OrdinalIgnoreCase
             )
         } catch {
@@ -810,7 +810,7 @@ function Test-CdpOwnerMatchesApp {
         }
     }
     if ($App.Kind -eq "StoreAlias" -or $App.Kind -eq "StoreAumid") {
-        return Test-HeiGePathWithin -Root ([string]$App.InstallPath) -Path ([string]$Owner.Path)
+        return Test-CodexThemesPathWithin -Root ([string]$App.InstallPath) -Path ([string]$Owner.Path)
     }
     return $false
 }
@@ -838,7 +838,7 @@ function Get-CdpOwner {
     $ownerGroups = @($owners | Group-Object Id)
     if ($ownerGroups.Count -gt 1) { throw "CDP 端口 $Port 的监听进程不唯一。" }
     $paths = @($ownerGroups[0].Group | ForEach-Object {
-        if ($_.Path) { Get-HeiGeFullPath -Path ([string]$_.Path) } else { "<null>" }
+        if ($_.Path) { Get-CodexThemesFullPath -Path ([string]$_.Path) } else { "<null>" }
     } | Sort-Object -Unique)
     if ($paths.Count -ne 1) { throw "CDP 端口 $Port 的同一 PID 存在冲突路径记录。" }
     $owner = $ownerGroups[0].Group | Sort-Object Path, ProcessName | Select-Object -First 1
@@ -997,7 +997,7 @@ function Start-CodexWithCdp {
 系统报错：$($_.Exception.Message)
 常见原因与解法：
 1. 正在用内置 Administrator 账户：系统默认禁止该账户启动商店版应用，请换普通用户账户运行。
-2. 安装位置特殊：命令行执行 setx HEIGE_CODEX_APP "完整exe路径"，关掉窗口重开再试。
+2. 安装位置特殊：命令行执行 setx CODEX_THEMES_APP "完整exe路径"，关掉窗口重开再试。
 3. 商店版反复失败：改装官方独立版（非商店版）客户端最稳。
 本脚本不需要管理员权限，用普通权限的命令行运行即可。
 "@

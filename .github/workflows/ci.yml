@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-installers:
+    name: Desktop installers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+      - name: Validate macOS entrypoints
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          for script_file in studio/scripts/*.command studio/scripts/lib/*.zsh; do
+            zsh -n "$script_file"
+          done
+
+      - name: Validate Windows entrypoints
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-ChildItem studio/scripts/windows -Recurse -Filter *.ps1 | ForEach-Object {
+            [void][scriptblock]::Create([IO.File]::ReadAllText($_.FullName))
+          }
+
+  browser:
+    name: Browser interaction
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

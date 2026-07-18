@@ -65,7 +65,7 @@ const TRANSITION_FILE_NAME = "transition.json";
 const MAX_PRIVATE_JSON_BYTES = 64 * 1024;
 const MAX_LEGACY_THEME_BYTES = 256;
 const UTF8_DECODER = new TextDecoder("utf-8", { fatal: true });
-const INSTALL_STATE_PRODUCT = "heige-codex-skin-studio";
+const INSTALL_STATE_PRODUCT = "codex-themes";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const INSTALL_STATE_PARTICIPANT_KEYS = [
   "afterState",

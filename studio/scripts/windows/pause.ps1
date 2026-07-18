@@ -3,11 +3,11 @@ $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "lib\entrypoints.ps1")
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
-if (-not $PSBoundParameters.ContainsKey("Port") -and $env:HEIGE_CODEX_SKIN_PORT) {
-    $Port = [int]$env:HEIGE_CODEX_SKIN_PORT
+if (-not $PSBoundParameters.ContainsKey("Port") -and $env:CODEX_THEMES_PORT) {
+    $Port = [int]$env:CODEX_THEMES_PORT
 }
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$result = Invoke-HeiGePauseFlow -Root $root -Port $Port
+$result = Invoke-CodexThemesPauseFlow -Root $root -Port $Port
 if ($result.Mode -ceq "noop") {
     Write-Host "当前没有可移除的实时皮肤。"
 } else {

@@ -5,6 +5,7 @@ import {
   XP_QQ_AVATAR_RULES,
   XP_QQ_PROFILE_RULES,
   buildSkinMenuScript,
+  computeThemeMenuLeft,
   computeXpQqAvatarCrop,
   deriveXpQqContactIdentity,
   xpQqContactStatus,
@@ -12,6 +13,12 @@ import {
   normalizeXpQqProfile,
   validateXpQqAvatarFileMeta,
 } from "../src/skin-menu.mjs";
+
+test("theme switch anchor preserves a gap before the native search control", () => {
+  assert.equal(computeThemeMenuLeft(323.8203125), 285);
+  assert.equal(computeThemeMenuLeft(318.8203125), 280);
+  assert.equal(computeThemeMenuLeft(undefined), 286);
+});
 
 test("XP QQ contact identity is stable for Chinese, Latin and empty titles", () => {
   const chinese = deriveXpQqContactIdentity("  查找 Windows XP 风格  ", "thread-1");
@@ -127,47 +134,57 @@ test("generated skin menu installs the XP QQ runtime helpers", () => {
     styleId: "skin-style",
     menuId: "skin-menu",
   });
-  assert.match(script, /heige-xp-qq-avatar-editor/);
+  assert.match(script, /codex-themes-xp-qq-avatar-editor/);
   assert.match(script, /image\/png,image\/jpeg,image\/webp/);
   assert.match(script, /computeXpQqAvatarCrop/);
-  assert.match(script, /heigeCodexXpQqAvatarV1/);
+  assert.match(script, /codexThemesXpQqAvatarV1/);
   assert.match(script, /xp-qq-mode-switch/);
-  assert.match(script, /heige-xp-qq-file-title/);
-  assert.match(script, /heige-xp-qq-diff-shadow-style/);
+  assert.match(script, /codex-themes-xp-qq-file-title/);
+  assert.match(script, /codex-themes-xp-qq-diff-shadow-style/);
   assert.match(script, /diffHost\.shadowRoot/);
   assert.match(script, /observedDiffShadows/);
   assert.match(script, /diffShadowObserver\.observe\(shadow/);
   assert.match(script, /shadow\.lastElementChild !== shadowStyle/);
   assert.match(script, /@layer base/);
   assert.match(script, /--diffs-bg-addition: #e8f5ee !important/);
+  assert.doesNotMatch(script, /\[data-code\] \[data-line\] span \{ color:/);
+  assert.match(
+    script,
+    /main\.main-surface aside \[role="tabpanel"\]\[data-app-shell-tab-panel-controller="right"\]/,
+  );
+  assert.match(script, /matches\('\[data-tab-id\^="file:"\]'\)/);
+  assert.match(script, /--codex-themes-xp-qq-file-panel-inset/);
+  assert.match(script, /mainRect\.right - panelRect\.left/);
   assert.match(script, /syncXpQqWelcome/);
+  assert.match(script, /dataset\.codexThemesSkin/);
+  assert.doesNotMatch(script, /codexThemesCodexSkin/);
   assert.match(script, /xp-qq-welcome-space/);
   assert.match(script, /xp-qq-welcome-message/);
   assert.match(script, /xp-qq-welcome-suggestions/);
   assert.match(script, /xp-qq-quick-replies/);
   assert.match(script, /xp-qq-quick-reply/);
   assert.match(script, /clearXpQqWelcomeRoles/);
-  assert.match(script, /heige-xp-qq-sidebar-actions/);
+  assert.match(script, /codex-themes-xp-qq-sidebar-actions/);
   assert.match(script, /syncXpQqSidebarActions/);
   assert.match(script, /restoreXpQqSidebarActions/);
   assert.match(script, /xp-qq-sidebar-action/);
-  assert.match(script, /data-heige-native-action-hidden/);
+  assert.match(script, /data-codex-themes-native-action-hidden/);
   assert.match(script, /"新建任务", "拉取请求", "站点", "已安排", "插件"/);
   assert.match(script, /syncXpQqContacts/);
   assert.match(script, /clearXpQqContacts/);
   assert.match(script, /xp-qq-contact-group/);
   assert.match(script, /xp-qq-contact-presence/);
-  assert.match(script, /heigeContactInitial/);
-  assert.match(script, /heigeContactProject/);
-  assert.match(script, /heigeContactStatus/);
-  assert.match(script, /heigeContactCount/);
+  assert.match(script, /codexThemesContactInitial/);
+  assert.match(script, /codexThemesContactProject/);
+  assert.match(script, /codexThemesContactStatus/);
+  assert.match(script, /codexThemesContactCount/);
   assert.match(script, /querySelector\("\.animate-spin"\)/);
-  assert.match(script, /heige-xp-qq-profile/);
-  assert.match(script, /heige-xp-qq-profile-editor/);
+  assert.match(script, /codex-themes-xp-qq-profile/);
+  assert.match(script, /codex-themes-xp-qq-profile-editor/);
   assert.match(script, /xp-qq-profile-heading-row/);
-  assert.match(script, /heigeCodexXpQqProfileV1/);
+  assert.match(script, /codexThemesXpQqProfileV1/);
   assert.match(script, /syncXpQqUserNames/);
-  assert.match(script, /data-heige-xp-qq-nickname/);
+  assert.match(script, /data-codex-themes-xp-qq-nickname/);
   assert.match(script, /QQ 等级/);
   assert.match(script, /profileCard\.style\.display = active \? "" : "none"/);
   assert.match(script, /avatarButton\.style\.display = active \? "" : "none"/);
@@ -189,8 +206,54 @@ test("XP QQ mode switching never reparents React-owned navigation nodes", () => 
   assert.doesNotMatch(script, /toolbar\.appendChild\(action\)/);
   assert.doesNotMatch(script, /xp-qq-sidebar-actions-source/);
   assert.match(script, /modeSwitchProxy/);
-  assert.match(script, /data-heige-native-mode-hidden/);
+  assert.match(script, /data-codex-themes-native-mode-hidden/);
   assert.match(script, /new PointerEvent\("pointerdown"/);
   assert.match(script, /nativeButton\.click\(\)/);
-  assert.match(script, /data-heige-native-action-hidden/);
+  assert.match(script, /data-codex-themes-native-action-hidden/);
+});
+
+test("theme switch stays at one sidebar anchor and uses a vector appearance icon", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  assert.match(
+    script,
+    /root\.style\.cssText = "position:fixed;top:58px;left:286px;width:30px;height:24px;transform:none;/,
+  );
+  assert.match(script, /button\[aria-label="\\u641c\\u7d22"\]/);
+  assert.match(script, /searchRect\?\.top < 100 \? searchRect\.left : undefined/);
+  assert.match(script, /listen\(window, "resize", syncThemeMenuAnchor\)/);
+  assert.match(script, /createElementNS\("http:\/\/www\.w3\.org\/2000\/svg", "svg"\)/);
+  assert.match(script, /data-codex-themes-role", "theme-icon"/);
+  assert.doesNotMatch(script, /\\u\{1F3A8\}|🎨/);
+});
+
+test("switching to the native theme removes XP QQ sidebar ownership", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  const clearThemeStart = script.indexOf("const clearTheme =");
+  const clearThemeEnd = script.indexOf("let requestThemeSelection", clearThemeStart);
+  assert.notEqual(clearThemeStart, -1);
+  assert.notEqual(clearThemeEnd, -1);
+
+  const clearThemeSource = script.slice(clearThemeStart, clearThemeEnd);
+  assert.match(clearThemeSource, /restoreXpQqSidebarActions\(\)/);
+
+  const restoreStart = script.lastIndexOf("restoreXpQqSidebarActions =");
+  const restoreEnd = script.indexOf("const syncXpQqSidebarActions", restoreStart);
+  assert.notEqual(restoreStart, -1);
+  assert.notEqual(restoreEnd, -1);
+
+  const restoreSource = script.slice(restoreStart, restoreEnd);
+  assert.match(restoreSource, /querySelectorAll\(\"\[data-codex-themes-native-action-hidden\]\"\)/);
+  assert.match(restoreSource, /querySelectorAll\('\[data-codex-themes-role="xp-qq-sidebar-actions"\]'\)/);
 });

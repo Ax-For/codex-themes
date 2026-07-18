@@ -11,8 +11,27 @@ test("XP QQ CSS provides stable file and terminal chrome", () => {
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /#heige-xp-qq-file-title:not\(\[hidden\]\)/);
+  assert.match(css, /#codex-themes-xp-qq-file-title:not\(\[hidden\]\)/);
   assert.match(css, /position: fixed/);
+  assert.match(
+    css,
+    /\[role="tabpanel"\]\[data-app-shell-tab-panel-controller="right"\]\[data-tab-id\^="file:"\]/,
+  );
+  assert.match(
+    css,
+    /\.isolate:has\(> \[role="tabpanel"\]\[data-app-shell-tab-panel-controller="right"\]\) \{[^}]*position: relative !important;[^}]*z-index: 26 !important;/s,
+  );
+  assert.match(
+    css,
+    /\.isolate:has\(> \[role="tabpanel"\]\[data-app-shell-tab-panel-controller="right"\]\) > \.h-toolbar/,
+  );
+  assert.match(
+    css,
+    /main\.main-surface::before \{[^}]*right: var\(--codex-themes-xp-qq-file-panel-inset, 316px\);/s,
+  );
+  assert.match(css, /\[data-app-shell-tab-controller="right"\]/);
+  assert.match(css, /\[role="tab"\]\[aria-selected="true"\]/);
+  assert.doesNotMatch(css, /\[role="tabpanel"\]\[aria-label="打开文件"\]/);
   assert.match(css, /\[id\^="terminal-panel-"\]/);
   assert.match(css, /background-color: #10283c !important/);
 });
@@ -23,11 +42,31 @@ test("XP QQ CSS anchors the skin trigger and does not advertise fake composer to
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /#heige-codex-skin-menu \{[^}]*width: 52px !important/s);
-  assert.match(css, /#heige-codex-skin-menu \{[^}]*left: 286px !important/s);
-  assert.match(css, /#heige-codex-skin-menu-panel \{[^}]*left: 0 !important/s);
+  assert.match(css, /#codex-themes-skin-menu-panel \{[^}]*left: 0 !important/s);
+  assert.match(
+    css,
+    /\[data-codex-themes-role="menu-trigger-glyph"\] \{[^}]*width: auto !important;[^}]*white-space: nowrap;/s,
+  );
+  assert.match(css, /#codex-themes-skin-menu > button \{[^}]*width: 30px !important/s);
   assert.doesNotMatch(css, /字体|表情|截图/);
   assert.doesNotMatch(css, /\.composer-surface-chrome::before/);
+});
+
+test("XP QQ CSS paints the editable avatar on its fixed control", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.doesNotMatch(css, /\.app-shell-left-panel::after/);
+  assert.match(
+    css,
+    /#codex-themes-xp-qq-avatar-editor::before \{[^}]*position: absolute;[^}]*inset: 0;/s,
+  );
+  assert.match(
+    css,
+    /\[data-codex-themes-xp-qq-avatar="custom"\] #codex-themes-xp-qq-avatar-editor::before \{[^}]*background-image: var\(--codex-themes-xp-qq-avatar-image\) !important;/s,
+  );
 });
 
 test("XP QQ CSS exposes an owned mode proxy without moving the native trigger", () => {
@@ -36,10 +75,26 @@ test("XP QQ CSS exposes an owned mode proxy without moving the native trigger", 
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /#heige-xp-qq-mode-switch \{[^}]*top: 58px !important/s);
-  assert.match(css, /#heige-xp-qq-mode-switch \{[^}]*left: 208px !important/s);
-  assert.match(css, /#heige-xp-qq-mode-switch \{[^}]*width: 72px !important/s);
-  assert.match(css, /\[data-heige-native-mode-hidden="true"\] \{[^}]*clip-path: inset\(50%\) !important/s);
+  assert.match(css, /#codex-themes-xp-qq-mode-switch \{[^}]*top: 58px !important/s);
+  assert.match(css, /#codex-themes-xp-qq-mode-switch \{[^}]*left: 208px !important/s);
+  assert.match(css, /#codex-themes-xp-qq-mode-switch \{[^}]*width: 72px !important/s);
+  assert.match(css, /\[data-codex-themes-native-mode-hidden="true"\] \{[^}]*clip-path: inset\(50%\) !important/s);
+});
+
+test("XP QQ CSS keeps the native settings return action visible", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(
+    css,
+    /\.app-shell-left-panel:has\(\[data-settings-panel-slug\]\) nav > div:first-child > \[role="link"\]:first-child \{[^}]*position: absolute !important;[^}]*z-index: 29 !important;[^}]*top: 58px !important;[^}]*right: 8px !important;[^}]*width: 30px !important;[^}]*height: 24px !important;/s,
+  );
+  assert.match(
+    css,
+    /\.app-shell-left-panel:has\(\[data-settings-panel-slug\]\) nav > div:first-child > \[role="link"\]:first-child > svg \{[^}]*width: 16px !important;[^}]*height: 16px !important;/s,
+  );
 });
 
 test("XP QQ CSS keeps the shadow-DOM review diff on a readable light palette", () => {
@@ -62,13 +117,13 @@ test("XP QQ CSS turns the empty home state into a compact chat welcome", () => {
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /\[data-heige-role="xp-qq-welcome-space"\]/);
-  assert.match(css, /\[data-heige-role="xp-qq-welcome-message"\]::before \{[^}]*content: "Codex 助手"/s);
-  assert.match(css, /\[data-heige-role="xp-qq-welcome-suggestions"\]::before \{[^}]*content: "快捷回复"/s);
-  assert.match(css, /\[data-heige-role="xp-qq-welcome-suggestions"\] \{[^}]*width: min\(710px, calc\(100% - 44px\)\) !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-quick-replies"\][^{]*> div > div \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s);
-  assert.match(css, /\[data-heige-role="xp-qq-quick-reply"\] \{[^}]*min-height: 58px !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-welcome-message"\] \[data-testid="home-icon"\] \{[^}]*display: none !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-welcome-space"\]/);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-welcome-message"\]::before \{[^}]*content: "Codex 助手"/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-welcome-suggestions"\]::before \{[^}]*content: "快捷回复"/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-welcome-suggestions"\] \{[^}]*width: min\(710px, calc\(100% - 44px\)\) !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-quick-replies"\][^{]*> div > div \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-quick-reply"\] \{[^}]*min-height: 58px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-welcome-message"\] \[data-testid="home-icon"\] \{[^}]*display: none !important/s);
 });
 
 test("XP QQ CSS reuses the custom profile image for user messages", () => {
@@ -77,10 +132,10 @@ test("XP QQ CSS reuses the custom profile image for user messages", () => {
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after/);
-  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*content: "" !important/s);
-  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-image: var\(--heige-xp-qq-avatar-image\) !important/s);
-  assert.match(css, /\[data-heige-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-size: cover !important/s);
+  assert.match(css, /\[data-codex-themes-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after/);
+  assert.match(css, /\[data-codex-themes-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*content: "" !important/s);
+  assert.match(css, /\[data-codex-themes-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-image: var\(--codex-themes-xp-qq-avatar-image\) !important/s);
+  assert.match(css, /\[data-codex-themes-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-size: cover !important/s);
 });
 
 test("XP QQ CSS presents an editable compact identity profile", () => {
@@ -89,21 +144,21 @@ test("XP QQ CSS presents an editable compact identity profile", () => {
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /#heige-xp-qq-profile,\n#heige-xp-qq-profile-panel \{[^}]*display: none/s);
+  assert.match(css, /#codex-themes-xp-qq-profile,\n#codex-themes-xp-qq-profile-panel \{[^}]*display: none/s);
   assert.match(css, /\.app-shell-left-panel::before \{[^}]*height: 78px/s);
   assert.match(css, /\.app-shell-left-panel > \.max-w-full \{[^}]*padding-top: 78px/s);
-  assert.match(css, /#heige-xp-qq-profile \{[^}]*top: 58px/s);
-  assert.match(css, /#heige-xp-qq-profile \{[^}]*left: 66px/s);
-  assert.match(css, /#heige-xp-qq-profile \{[^}]*grid-template-rows: 18px 16px 16px/s);
-  assert.match(css, /\[data-heige-role="xp-qq-profile-heading-row"\] \{[^}]*display: flex/s);
-  assert.match(css, /\[data-heige-role="xp-qq-profile-heading-row"\] \{[^}]*gap: 4px/s);
-  assert.match(css, /\[data-heige-role="xp-qq-profile-nickname"\] \{[^}]*max-width: 112px/s);
-  assert.match(css, /#heige-xp-qq-profile-editor \{[^}]*position: static/s);
-  assert.match(css, /#heige-xp-qq-profile-editor \{[^}]*flex: 0 0 18px/s);
-  assert.match(css, /\[data-heige-role="xp-qq-profile-nickname"\],\n:root\[data-heige-codex-skin="xp-qq"\] \[data-heige-role="xp-qq-profile-signature"\],\n:root\[data-heige-codex-skin="xp-qq"\] \[data-heige-role="xp-qq-profile-level"\] \{[^}]*text-overflow: ellipsis/s);
-  assert.match(css, /#heige-xp-qq-profile-panel:not\(\[hidden\]\) \{[^}]*display: grid/s);
-  assert.match(css, /#heige-xp-qq-profile-panel:not\(\[hidden\]\) \{[^}]*top: 114px/s);
-  assert.match(css, /\[data-user-message-bubble\]::before \{[^}]*content: attr\(data-heige-xp-qq-nickname\)/s);
+  assert.match(css, /#codex-themes-xp-qq-profile \{[^}]*top: 58px/s);
+  assert.match(css, /#codex-themes-xp-qq-profile \{[^}]*left: 66px/s);
+  assert.match(css, /#codex-themes-xp-qq-profile \{[^}]*grid-template-rows: 18px 16px 16px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-profile-heading-row"\] \{[^}]*display: flex/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-profile-heading-row"\] \{[^}]*gap: 4px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-profile-nickname"\] \{[^}]*max-width: 112px/s);
+  assert.match(css, /#codex-themes-xp-qq-profile-editor \{[^}]*position: static/s);
+  assert.match(css, /#codex-themes-xp-qq-profile-editor \{[^}]*flex: 0 0 18px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-profile-nickname"\],\n:root\[data-codex-themes-skin="xp-qq"\] \[data-codex-themes-role="xp-qq-profile-signature"\],\n:root\[data-codex-themes-skin="xp-qq"\] \[data-codex-themes-role="xp-qq-profile-level"\] \{[^}]*text-overflow: ellipsis/s);
+  assert.match(css, /#codex-themes-xp-qq-profile-panel:not\(\[hidden\]\) \{[^}]*display: grid/s);
+  assert.match(css, /#codex-themes-xp-qq-profile-panel:not\(\[hidden\]\) \{[^}]*top: 114px/s);
+  assert.match(css, /\[data-user-message-bubble\]::before \{[^}]*content: attr\(data-codex-themes-xp-qq-nickname\)/s);
   assert.match(css, /\[data-user-message-bubble\]::before \{[^}]*text-overflow: ellipsis/s);
 });
 
@@ -113,11 +168,11 @@ test("XP QQ CSS presents primary sidebar actions as a five-tab QQ toolbar", () =
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /#heige-xp-qq-sidebar-actions \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\) !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-sidebar-action"\] \{[^}]*min-height: 56px !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-sidebar-action"\][^{]*\.heige-xp-qq-sidebar-action-label \{[^}]*font: 600 11px\/1\.15/s);
-  assert.match(css, /\[data-heige-role="xp-qq-sidebar-action"\][^{]*\.heige-xp-qq-sidebar-action-label \{[^}]*white-space: nowrap !important/s);
-  assert.match(css, /\[data-heige-native-action-hidden="true"\] \{[^}]*display: none !important/s);
+  assert.match(css, /#codex-themes-xp-qq-sidebar-actions \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\) !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-sidebar-action"\] \{[^}]*min-height: 56px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-sidebar-action"\][^{]*\.codex-themes-xp-qq-sidebar-action-label \{[^}]*font: 600 11px\/1\.15/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-sidebar-action"\][^{]*\.codex-themes-xp-qq-sidebar-action-label \{[^}]*white-space: nowrap !important/s);
+  assert.match(css, /\[data-codex-themes-native-action-hidden="true"\] \{[^}]*display: none !important/s);
 });
 
 test("XP QQ CSS presents projects and threads as a recent-contact list", () => {
@@ -127,25 +182,25 @@ test("XP QQ CSS presents projects and threads as a recent-contact list", () => {
   });
 
   assert.match(css, /button\[data-app-action-sidebar-section-toggle\]::after \{[^}]*content: "最近会话"/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\] \{[^}]*height: 28px !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\] \{[^}]*background: transparent !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\]::before \{[^}]*content: "▾"/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\] > div:first-child > \[data-sidebar-project-drop-zone\] \{[^}]*display: none !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact-group"\]::after \{[^}]*content: attr\(data-heige-contact-count\)/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \{[^}]*height: 54px !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \{[^}]*margin: 1px 7px !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \{[^}]*border-radius: 4px !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::before \{[^}]*content: attr\(data-heige-contact-initial\)/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::before \{[^}]*width: 36px/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::before \{[^}]*border-radius: 8px/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\]::after \{[^}]*content: attr\(data-heige-contact-status\)/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \[data-thread-title-trigger\] \{[^}]*position: absolute !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\] \[data-thread-title\] \{[^}]*font: 500 12px\/20px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] \{[^}]*height: 28px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] \{[^}]*background: transparent !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\]::before \{[^}]*content: "▾"/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] > div:first-child > \[data-sidebar-project-drop-zone\] \{[^}]*display: none !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\]::after \{[^}]*content: attr\(data-codex-themes-contact-count\)/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*height: 54px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*margin: 1px 7px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*border-radius: 4px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*content: attr\(data-codex-themes-contact-initial\)/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*width: 36px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*border-radius: 8px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::after \{[^}]*content: attr\(data-codex-themes-contact-status\)/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \[data-thread-title-trigger\] \{[^}]*position: absolute !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \[data-thread-title\] \{[^}]*font: 500 12px\/20px/s);
   assert.match(css, /\[data-app-action-sidebar-thread-active="true"\] \[data-thread-title\][^{]*\{[^}]*font-weight: 650 !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact-presence"\] \{[^}]*width: 8px/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\]\[data-heige-contact-state="running"\] \{[^}]*background: #dfeef9 !important/s);
-  assert.match(css, /\[data-heige-role="xp-qq-contact"\]\[data-heige-contact-state="running"\] \{[^}]*box-shadow: inset 3px 0 #2d79b8 !important/s);
-  assert.doesNotMatch(css, /\] \[data-heige-contact-state="running"\] \{/);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-presence"\] \{[^}]*width: 8px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]\[data-codex-themes-contact-state="running"\] \{[^}]*background: #dfeef9 !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]\[data-codex-themes-contact-state="running"\] \{[^}]*box-shadow: inset 3px 0 #2d79b8 !important/s);
+  assert.doesNotMatch(css, /\] \[data-codex-themes-contact-state="running"\] \{/);
   assert.match(css, /\[data-app-action-sidebar-thread-active="true"\] \{[^}]*background: #dfeef9 !important/s);
-  assert.doesNotMatch(css, /\[data-heige-role="xp-qq-contact"\]\[data-heige-contact-state="running"\] \{[^}]*linear-gradient/s);
+  assert.doesNotMatch(css, /\[data-codex-themes-role="xp-qq-contact"\]\[data-codex-themes-contact-state="running"\] \{[^}]*linear-gradient/s);
 });

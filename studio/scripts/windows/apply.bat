@@ -1,5 +1,5 @@
 @echo off
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0apply.ps1" %*
-set "HEIGE_EXIT=%ERRORLEVEL%"
-if not "%HEIGE_EXIT%"=="0" pause
-exit /b %HEIGE_EXIT%
+set "CODEX_THEMES_EXIT=%ERRORLEVEL%"
+if not "%CODEX_THEMES_EXIT%"=="0" pause
+exit /b %CODEX_THEMES_EXIT%

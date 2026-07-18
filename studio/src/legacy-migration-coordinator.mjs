@@ -153,7 +153,7 @@ function validateDocument(value, expectedPath = null) {
   if (
     !exactKeys(value, KEYS) ||
     value.schemaVersion !== 1 ||
-    value.product !== "heige-codex-skin-studio" ||
+    value.product !== "codex-themes" ||
     value.operation !== "legacy-migration" ||
     !UUID.test(value.transactionId) ||
     !["undecided", "rollback", "commit"].includes(value.decision) ||
@@ -333,7 +333,7 @@ export async function createLegacyMigrationCoordinator({
   }
   const document = validateDocument({
     schemaVersion: 1,
-    product: "heige-codex-skin-studio",
+    product: "codex-themes",
     operation: "legacy-migration",
     transactionId,
     revision: 0,

@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="${0:A:h:h:h}"
 
 fail() {
-  print -u2 -- "HeiGe Codex Skin Studio：$1"
+  print -u2 -- "Codex Themes：$1"
   exit "${2:-1}"
 }
 
@@ -53,7 +53,7 @@ app_node() {
     "$app/Contents/Resources/cua_node/node"; do
     if [[ -f "$candidate" && -x "$candidate" ]]; then
       if probe_node "$candidate" "$source 内置 Node"; then
-        export HEIGE_CODEX_APP="$app"
+        export CODEX_THEMES_APP="$app"
         return 0
       fi
     fi
@@ -69,18 +69,18 @@ validate_app() {
   [[ -f "$app/Contents/MacOS/ChatGPT" ]] || fail "$source 缺少 Codex 主程序：$app"
 }
 
-if (( ${+HEIGE_CODEX_APP} )); then
-  [[ -n "$HEIGE_CODEX_APP" ]] || fail "HEIGE_CODEX_APP 不能为空"
-  validate_app "$HEIGE_CODEX_APP" "HEIGE_CODEX_APP"
-  export HEIGE_CODEX_APP
+if (( ${+CODEX_THEMES_APP} )); then
+  [[ -n "$CODEX_THEMES_APP" ]] || fail "CODEX_THEMES_APP 不能为空"
+  validate_app "$CODEX_THEMES_APP" "CODEX_THEMES_APP"
+  export CODEX_THEMES_APP
 fi
 
-if (( ${+HEIGE_NODE} )); then
-  [[ -n "$HEIGE_NODE" ]] || fail "HEIGE_NODE 不能为空"
-  validate_node "$HEIGE_NODE" "HEIGE_NODE"
+if (( ${+CODEX_THEMES_NODE} )); then
+  [[ -n "$CODEX_THEMES_NODE" ]] || fail "CODEX_THEMES_NODE 不能为空"
+  validate_node "$CODEX_THEMES_NODE" "CODEX_THEMES_NODE"
   NODE="$REPLY"
-elif (( ${+HEIGE_CODEX_APP} )); then
-  app_node "$HEIGE_CODEX_APP" "HEIGE_CODEX_APP" || fail "HEIGE_CODEX_APP 中没有可用的 Node.js 22 运行时"
+elif (( ${+CODEX_THEMES_APP} )); then
+  app_node "$CODEX_THEMES_APP" "CODEX_THEMES_APP" || fail "CODEX_THEMES_APP 中没有可用的 Node.js 22 运行时"
   NODE="$REPLY"
 else
   NODE=""

@@ -108,8 +108,8 @@ const COMMAND_OPTIONS = new Map([
   ["status", new Set(["port"])],
   ["doctor", new Set(["port"])],
 ]);
-const WINDOWS_PRODUCTION_TASK = "HeiGe Codex Skin Studio Controller";
-const WINDOWS_TEST_TASK = /^HeiGe Codex Skin Studio Test [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const WINDOWS_PRODUCTION_TASK = "Codex Themes Controller";
+const WINDOWS_TEST_TASK = /^Codex Themes Test [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 function parseInvocation(argv) {
   const command = argv[0] ?? "help";
@@ -221,22 +221,22 @@ function controllerPaths({ platform, stateDirectory, taskName }) {
 
 function windowsCliTestContext(platform, env = process.env) {
   const keys = [
-    "HEIGE_TEST_WINDOWS_RUNTIME_FIXTURE",
-    "HEIGE_TEST_WINDOWS_STATE_ROOT",
-    "HEIGE_TEST_WINDOWS_TASK_NAME",
+    "CODEX_THEMES_TEST_WINDOWS_RUNTIME_FIXTURE",
+    "CODEX_THEMES_TEST_WINDOWS_STATE_ROOT",
+    "CODEX_THEMES_TEST_WINDOWS_TASK_NAME",
   ];
   const present = keys.filter((key) => env[key] !== undefined);
   if (present.length === 0) return null;
   if (platform !== "win32" || env.NODE_ENV !== "test" || present.length !== keys.length) {
-    throw new Error("Windows CLI test context requires win32, NODE_ENV=test, and all HEIGE_TEST fields");
+    throw new Error("Windows CLI test context requires win32, NODE_ENV=test, and all CODEX_THEMES_TEST fields");
   }
-  const taskName = env.HEIGE_TEST_WINDOWS_TASK_NAME;
+  const taskName = env.CODEX_THEMES_TEST_WINDOWS_TASK_NAME;
   if (!WINDOWS_TEST_TASK.test(taskName)) {
     throw new Error("Windows CLI test task name must contain an exact isolated GUID");
   }
   const paths = controllerPaths({
     platform,
-    stateDirectory: env.HEIGE_TEST_WINDOWS_STATE_ROOT,
+    stateDirectory: env.CODEX_THEMES_TEST_WINDOWS_STATE_ROOT,
     taskName,
   });
   return Object.freeze({ paths, taskName });
@@ -619,7 +619,7 @@ export function parseMacosInstallAuthorization(value) {
   try {
     parsed = JSON.parse(value);
   } catch (cause) {
-    throw new Error("HEIGE_MACOS_INSTALL_AUTHORIZATION is not valid JSON", { cause });
+    throw new Error("CODEX_THEMES_MACOS_INSTALL_AUTHORIZATION is not valid JSON", { cause });
   }
   const keys = [
     "expectedControlToken",
@@ -648,7 +648,7 @@ export function parseMacosInstallAuthorization(value) {
     Buffer.from(parsed.expectedControlToken, "base64url").toString("base64url") !==
       parsed.expectedControlToken
   ) {
-    throw new Error("HEIGE_MACOS_INSTALL_AUTHORIZATION schema is invalid");
+    throw new Error("CODEX_THEMES_MACOS_INSTALL_AUTHORIZATION schema is invalid");
   }
   return Object.freeze({ ...parsed });
 }
@@ -1502,7 +1502,7 @@ async function legacyLoaded() {
   try {
     await execFile("/bin/launchctl", [
       "print",
-      `gui/${process.getuid()}/com.heige.codex-skin-watchdog`,
+      `gui/${process.getuid()}/com.codex-themes.skin-watchdog`,
     ]);
     return true;
   } catch (error) {
@@ -1875,7 +1875,7 @@ async function productionMigrateLegacy({ deps, paths, roots, port }) {
     port,
     statePath: paths.statePath,
     journalPath,
-    legacyThemePath: join(process.env.HOME, ".codex", "heige-codex-skin-persist", "theme"),
+    legacyThemePath: join(process.env.HOME, ".codex", "codex-themes-skin-persist", "theme"),
     dependencies,
   });
 }
@@ -2167,7 +2167,7 @@ export async function runCli(argv, overrides = {}) {
     : process.platform;
   const installAuthorization = command === "controller"
     ? null
-    : parseMacosInstallAuthorization(process.env.HEIGE_MACOS_INSTALL_AUTHORIZATION);
+    : parseMacosInstallAuthorization(process.env.CODEX_THEMES_MACOS_INSTALL_AUTHORIZATION);
   if (
     installAuthorization !== null &&
     (
@@ -2415,7 +2415,7 @@ if (isMainEntry()) {
   runCli(process.argv.slice(2))
     .then((result) => process.stdout.write(`${JSON.stringify(result, null, 2)}\n`))
     .catch((error) => {
-      process.stderr.write(`HeiGe Codex Skin Studio：${error.message}\n`);
+      process.stderr.write(`Codex Themes：${error.message}\n`);
       process.exitCode = 1;
     });
 }

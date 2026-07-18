@@ -2,7 +2,7 @@
     [Parameter(Mandatory = $true)]
     [ValidateSet("run", "register", "start", "unregister", "status")]
     [string]$Action,
-    [string]$TaskName = "HeiGe Codex Skin Studio Controller",
+    [string]$TaskName = "Codex Themes Controller",
     [ValidateRange(1024, 65535)]
     [int]$Port = 9341,
     [string]$StateDirectory,
@@ -19,9 +19,9 @@ $script:RepositoryRoot = Split-Path (Split-Path $script:WindowsRoot -Parent) -Pa
 . (Join-Path $script:WindowsRoot "lib\scheduled-task.ps1")
 
 try {
-    $testMode = Test-HeiGeTestTaskName -TaskName $TaskName
-    Assert-HeiGeTaskScope -TaskName $TaskName -TestMode:$testMode
-    $StateDirectory = Resolve-HeiGeScopedStateDirectory `
+    $testMode = Test-CodexThemesTestTaskName -TaskName $TaskName
+    Assert-CodexThemesTaskScope -TaskName $TaskName -TestMode:$testMode
+    $StateDirectory = Resolve-CodexThemesScopedStateDirectory `
         -StateDirectory $StateDirectory -TestMode:$testMode
     $hasExpectedRevision = $PSBoundParameters.ContainsKey("ExpectedRevision")
     $hasExpectedNonce = $PSBoundParameters.ContainsKey("ExpectedTransitionNonce")
@@ -37,13 +37,13 @@ try {
     }
 
     if ($Action -eq "status") {
-        Get-HeiGeScheduledTaskStatus -TaskName $TaskName -StateDirectory $StateDirectory `
+        Get-CodexThemesScheduledTaskStatus -TaskName $TaskName -StateDirectory $StateDirectory `
             -TestMode:$testMode | ConvertTo-Json -Depth 8
         exit 0
     }
 
     if ($Action -eq "unregister") {
-        Unregister-HeiGeScheduledTask -TaskName $TaskName -StateDirectory $StateDirectory `
+        Unregister-CodexThemesScheduledTask -TaskName $TaskName -StateDirectory $StateDirectory `
             -TestMode:$testMode -PreserveHandshake:$PreserveHandshake | ConvertTo-Json -Depth 8
         exit 0
     }
@@ -52,16 +52,16 @@ try {
         if ($null -eq $ExpectedRevision -or -not $ExpectedTransitionNonce) {
             throw "start requires ExpectedRevision and ExpectedTransitionNonce"
         }
-        Protect-HeiGeStateDirectory -Path $StateDirectory | Out-Null
-        Start-HeiGeScheduledTask -TaskName $TaskName -StateDirectory $StateDirectory `
+        Protect-CodexThemesStateDirectory -Path $StateDirectory | Out-Null
+        Start-CodexThemesScheduledTask -TaskName $TaskName -StateDirectory $StateDirectory `
             -ExpectedRevision ([long]$ExpectedRevision) `
             -ExpectedTransitionNonce $ExpectedTransitionNonce -TestMode:$testMode | ConvertTo-Json -Depth 8
         exit 0
     }
 
-    Protect-HeiGeStateDirectory -Path $StateDirectory | Out-Null
+    Protect-CodexThemesStateDirectory -Path $StateDirectory | Out-Null
     $inheritedIdentityToken = [System.Environment]::GetEnvironmentVariable(
-        "HEIGE_WINDOWS_APP_IDENTITY",
+        "CODEX_THEMES_WINDOWS_APP_IDENTITY",
         [System.EnvironmentVariableTarget]::Process
     )
     if ($AppIdentityToken -and $inheritedIdentityToken -and
@@ -72,16 +72,16 @@ try {
     if (-not $boundIdentityToken) {
         throw "$Action requires an immutable app identity token"
     }
-    $app = Resolve-HeiGeBoundCodexApp -IdentityToken $boundIdentityToken
+    $app = Resolve-CodexThemesBoundCodexApp -IdentityToken $boundIdentityToken
     [System.Environment]::SetEnvironmentVariable(
-        "HEIGE_WINDOWS_APP_IDENTITY",
+        "CODEX_THEMES_WINDOWS_APP_IDENTITY",
         $boundIdentityToken,
         [System.EnvironmentVariableTarget]::Process
     )
     $node = Get-NodeRuntime -App $app
 
     if ($Action -eq "register") {
-        Register-HeiGeScheduledTask -TaskName $TaskName -NodePath $node.Path `
+        Register-CodexThemesScheduledTask -TaskName $TaskName -NodePath $node.Path `
             -ControllerPath $PSCommandPath -StateDirectory $StateDirectory -Port $Port `
             -AppIdentityToken $boundIdentityToken `
             -TestMode:$testMode | ConvertTo-Json -Depth 8
@@ -92,7 +92,7 @@ try {
     if (-not (Test-Path -LiteralPath $cliPath -PathType Leaf)) {
         throw "Node controller CLI 不存在：$cliPath"
     }
-    $result = Invoke-HeiGeNodeControllerProcess -NodePath $node.Path -CliPath $cliPath `
+    $result = Invoke-CodexThemesNodeControllerProcess -NodePath $node.Path -CliPath $cliPath `
         -TaskName $TaskName -Port $Port -StateDirectory $StateDirectory `
         -AppIdentityToken $boundIdentityToken
     if ([string]$result.action -ceq "unregister") {
@@ -105,6 +105,6 @@ try {
     }
     throw "Node controller 以未知 action 退出：$([string]$result.action)"
 } catch {
-    [Console]::Error.WriteLine("HeiGe Codex Skin Studio Windows controller：$($_.Exception.Message)")
+    [Console]::Error.WriteLine("Codex Themes Windows controller：$($_.Exception.Message)")
     exit 1
 }

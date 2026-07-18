@@ -14,7 +14,7 @@ import { validateKnownOuterTransactionDocument } from "./outer-transaction-valid
 import { validateInstallStateParticipant } from "./state-store.mjs";
 
 const FILE_NAME = "macos-install.json";
-const PRODUCT = "heige-codex-skin-studio";
+const PRODUCT = "codex-themes";
 const MAX_BYTES = 256 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const LABEL = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -184,7 +184,7 @@ export function validateMacosInstallJournal(value, expectedPath = null) {
   const stateRoot = canonicalAbsolute(value.stateRoot, "stateRoot");
   if (
     targetRoot !== join(home, ".codex", PRODUCT) ||
-    stateRoot !== join(home, "Library", "Application Support", "HeiGeCodexSkinStudio")
+    stateRoot !== join(home, "Library", "Application Support", "CodexThemes")
   ) throw new Error("macOS install journal production roots are invalid");
   const path = expectedPath ?? macosInstallJournalPath(stateRoot);
   if (path !== macosInstallJournalPath(stateRoot)) {

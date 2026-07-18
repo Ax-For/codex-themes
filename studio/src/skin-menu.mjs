@@ -6,7 +6,7 @@ const CONTROL_ENDPOINT = /^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})\/v1\/persiste
 const CONTROL_TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
 export const XP_QQ_AVATAR_RULES = Object.freeze({
-  storageKey: "heigeCodexXpQqAvatarV1",
+  storageKey: "codexThemesXpQqAvatarV1",
   maxInputBytes: 8 * 1024 * 1024,
   maxStoredChars: 256_000,
   outputSide: 128,
@@ -19,7 +19,7 @@ export const XP_QQ_AVATAR_RULES = Object.freeze({
 });
 
 export const XP_QQ_PROFILE_RULES = Object.freeze({
-  storageKey: "heigeCodexXpQqProfileV1",
+  storageKey: "codexThemesXpQqProfileV1",
   nicknameMax: 24,
   signatureMax: 48,
   levelMin: 1,
@@ -74,6 +74,20 @@ export function xpQqContactStatus(state) {
   if (state === "active") return "当前会话";
   if (state === "pinned") return "已置顶";
   return "本地会话";
+}
+
+export function computeThemeMenuLeft(
+  searchLeft,
+  preferredLeft = 286,
+  menuWidth = 30,
+  gap = 8,
+  minLeft = 8,
+) {
+  if (!Number.isFinite(searchLeft)) return preferredLeft;
+  return Math.max(minLeft, Math.min(
+    preferredLeft,
+    Math.floor(searchLeft - menuWidth - gap),
+  ));
 }
 
 export function validateXpQqAvatarFileMeta(file, rules) {
@@ -141,7 +155,7 @@ function normalizeControl(control) {
     !CONTROL_TOKEN.test(control.token ?? "") ||
     Buffer.from(control.token, "base64url").length !== 32 ||
     Buffer.from(control.token, "base64url").toString("base64url") !== control.token ||
-    control.launcherName !== "HeiGe 皮肤启动器"
+    control.launcherName !== "Codex 主题启动器"
   ) {
     throw new Error("菜单控制描述无效");
   }
@@ -182,29 +196,29 @@ export function buildSkinMenuScript({
     menuId,
     activeId,
     themes,
-    hiddenKey: "heigeCodexSkinMenuHidden",
-    selectedKey: "heigeCodexSkinSelected",
-    nativeSel: "__heige_native__",
+    hiddenKey: "codexThemesSkinMenuHidden",
+    selectedKey: "codexThemesSkinSelected",
+    nativeSel: "__codex_themes_native__",
     control: normalizeControl(control),
     limits: RESOURCE_LIMITS,
     avatar: {
       ...XP_QQ_AVATAR_RULES,
-      buttonId: "heige-xp-qq-avatar-editor",
-      inputId: "heige-xp-qq-avatar-input",
-      noticeId: "heige-xp-qq-avatar-notice",
+      buttonId: "codex-themes-xp-qq-avatar-editor",
+      inputId: "codex-themes-xp-qq-avatar-input",
+      noticeId: "codex-themes-xp-qq-avatar-notice",
     },
     profile: {
       ...XP_QQ_PROFILE_RULES,
-      cardId: "heige-xp-qq-profile",
-      editorId: "heige-xp-qq-profile-editor",
-      panelId: "heige-xp-qq-profile-panel",
+      cardId: "codex-themes-xp-qq-profile",
+      editorId: "codex-themes-xp-qq-profile-editor",
+      panelId: "codex-themes-xp-qq-profile-panel",
     },
-    fileTitleId: "heige-xp-qq-file-title",
-    sidebarActionsId: "heige-xp-qq-sidebar-actions",
+    fileTitleId: "codex-themes-xp-qq-file-title",
+    sidebarActionsId: "codex-themes-xp-qq-sidebar-actions",
   });
 
   return `(() => {
-  try { window.__heigeCodexSkinRuntime?.dispose?.(); } catch {}
+  try { window.__codexThemesSkinRuntime?.dispose?.(); } catch {}
   const data = ${payload};
   const validateXpQqAvatarFileMeta = (${validateXpQqAvatarFileMeta.toString()});
   const computeXpQqAvatarCrop = (${computeXpQqAvatarCrop.toString()});
@@ -212,11 +226,12 @@ export function buildSkinMenuScript({
   const normalizeXpQqProfile = (${normalizeXpQqProfile.toString()});
   const deriveXpQqContactIdentity = (${deriveXpQqContactIdentity.toString()});
   const xpQqContactStatus = (${xpQqContactStatus.toString()});
+  const computeThemeMenuLeft = (${computeThemeMenuLeft.toString()});
 
   const runtimeAbortController = new AbortController();
   const signal = runtimeAbortController.signal;
   const generationBytes = new Uint8Array(16);
-  if (!globalThis.crypto?.getRandomValues) throw new Error("HeiGe menu requires crypto.getRandomValues");
+  if (!globalThis.crypto?.getRandomValues) throw new Error("CodexThemes menu requires crypto.getRandomValues");
   globalThis.crypto.getRandomValues(generationBytes);
   const generation = [...generationBytes].map((value) => value.toString(16).padStart(2, "0")).join("");
   const trackedListeners = [];
@@ -227,12 +242,12 @@ export function buildSkinMenuScript({
   const trackedObservers = new Set();
   const trackedDiffShadowStyles = new Set();
   const rawChannel = typeof BroadcastChannel === "function"
-    ? new BroadcastChannel("heige-codex-skin-v2")
+    ? new BroadcastChannel("codex-themes-skin-v2")
     : null;
   const channel = {
     closed: false,
     postMessage(value) {
-      if (this.closed) throw new DOMException("HeiGe menu generation disposed", "InvalidStateError");
+      if (this.closed) throw new DOMException("CodexThemes menu generation disposed", "InvalidStateError");
       rawChannel?.postMessage(value);
     },
     close() {
@@ -296,7 +311,7 @@ export function buildSkinMenuScript({
     trackedReaders.clear();
     for (const [image, reject] of trackedImages) {
       try { image.onload = null; image.onerror = null; image.src = ""; } catch {}
-      try { reject(new DOMException("HeiGe menu generation disposed", "AbortError")); } catch {}
+      try { reject(new DOMException("CodexThemes menu generation disposed", "AbortError")); } catch {}
     }
     trackedImages.clear();
     for (const observer of trackedObservers) {
@@ -321,28 +336,28 @@ export function buildSkinMenuScript({
     const ownedProfile = document.getElementById(data.profile.cardId);
     const ownedProfilePanel = document.getElementById(data.profile.panelId);
     const ownedFileTitle = document.getElementById(data.fileTitleId);
-    if (ownedMenu?.dataset.heigeGeneration === generation) ownedMenu.remove();
-    if (ownedStyle?.dataset.heigeGeneration === generation) ownedStyle.remove();
-    if (ownedAvatarButton?.dataset.heigeGeneration === generation) ownedAvatarButton.remove();
-    if (ownedAvatarInput?.dataset.heigeGeneration === generation) ownedAvatarInput.remove();
-    if (ownedAvatarNotice?.dataset.heigeGeneration === generation) ownedAvatarNotice.remove();
-    if (ownedProfile?.dataset.heigeGeneration === generation) ownedProfile.remove();
-    if (ownedProfilePanel?.dataset.heigeGeneration === generation) ownedProfilePanel.remove();
-    if (ownedFileTitle?.dataset.heigeGeneration === generation) ownedFileTitle.remove();
-    document.documentElement.style.removeProperty("--heige-xp-qq-avatar-image");
-    delete document.documentElement.dataset.heigeXpQqAvatar;
-    if (window.__heigeCodexSkinRuntime === runtime) {
-      delete document.documentElement.dataset.heigeCodexSkin;
-      try { delete window.__heigeCodexSkin; } catch { window.__heigeCodexSkin = undefined; }
-      try { delete window.__heigeCodexSkinRuntime; } catch { window.__heigeCodexSkinRuntime = undefined; }
+    if (ownedMenu?.dataset.codexThemesGeneration === generation) ownedMenu.remove();
+    if (ownedStyle?.dataset.codexThemesGeneration === generation) ownedStyle.remove();
+    if (ownedAvatarButton?.dataset.codexThemesGeneration === generation) ownedAvatarButton.remove();
+    if (ownedAvatarInput?.dataset.codexThemesGeneration === generation) ownedAvatarInput.remove();
+    if (ownedAvatarNotice?.dataset.codexThemesGeneration === generation) ownedAvatarNotice.remove();
+    if (ownedProfile?.dataset.codexThemesGeneration === generation) ownedProfile.remove();
+    if (ownedProfilePanel?.dataset.codexThemesGeneration === generation) ownedProfilePanel.remove();
+    if (ownedFileTitle?.dataset.codexThemesGeneration === generation) ownedFileTitle.remove();
+    document.documentElement.style.removeProperty("--codex-themes-xp-qq-avatar-image");
+    delete document.documentElement.dataset.codexThemesXpQqAvatar;
+    if (window.__codexThemesSkinRuntime === runtime) {
+      delete document.documentElement.dataset.codexThemesSkin;
+      try { delete window.__codexThemesSkin; } catch { window.__codexThemesSkin = undefined; }
+      try { delete window.__codexThemesSkinRuntime; } catch { window.__codexThemesSkinRuntime = undefined; }
     }
     return true;
   };
   runtime = { generation, signal, channel, dispose, status: () => statusSnapshot() };
-  window.__heigeCodexSkinRuntime = runtime;
-  const isCurrent = () => !signal.aborted && window.__heigeCodexSkinRuntime === runtime;
+  window.__codexThemesSkinRuntime = runtime;
+  const isCurrent = () => !signal.aborted && window.__codexThemesSkinRuntime === runtime;
   const assertCurrent = () => {
-    if (!isCurrent()) throw new DOMException("HeiGe menu generation disposed", "AbortError");
+    if (!isCurrent()) throw new DOMException("CodexThemes menu generation disposed", "AbortError");
   };
   let outboundSequence = 0;
   const publish = (kind, value) => {
@@ -367,31 +382,65 @@ export function buildSkinMenuScript({
     style.id = data.styleId;
     document.head.appendChild(style);
   }
-  style.dataset.heigeGeneration = generation;
+  style.dataset.codexThemesGeneration = generation;
 
   document.getElementById(data.menuId)?.remove();
   const root = document.createElement("div");
   root.id = data.menuId;
-  root.dataset.heigeGeneration = generation;
-  // 双平台统一放顶部中间：右上角会撞 Windows 的窗口控制按钮和 Codex 自身菜单；
-  // 顶部中间正是标题栏拖拽区，no-drag 必须保留，否则点击被拖拽吞掉
-  root.style.cssText = "position:fixed;top:10px;left:50%;width:30px;height:30px;transform:translateX(-50%);z-index:2147483000;font:500 13px/1.4 system-ui;user-select:none;-webkit-app-region:no-drag;";
+  root.dataset.codexThemesGeneration = generation;
+  // Keep one muscle-memory anchor in both native and XP QQ modes. The fixed
+  // sidebar-header slot also avoids the draggable title bar and window controls.
+  root.style.cssText = "position:fixed;top:58px;left:286px;width:30px;height:24px;transform:none;z-index:2147483000;font:500 13px/1.4 system-ui;user-select:none;-webkit-app-region:no-drag;";
+
+  const syncThemeMenuAnchor = () => {
+    if (!isCurrent()) return;
+    const searchButton = document.querySelector('.app-shell-left-panel button[aria-label="\\u641c\\u7d22"]');
+    const searchRect = searchButton?.getBoundingClientRect();
+    const searchLeft = searchRect?.top < 100 ? searchRect.left : undefined;
+    root.style.left = computeThemeMenuLeft(searchLeft) + "px";
+  };
+  listen(window, "resize", syncThemeMenuAnchor);
+  const themeMenuAnchorObserver = new MutationObserver(syncThemeMenuAnchor);
+  themeMenuAnchorObserver.observe(document.documentElement, { childList: true, subtree: true });
+  trackedObservers.add(themeMenuAnchorObserver);
 
   const button = document.createElement("button");
   button.type = "button";
   button.setAttribute("aria-label", "打开皮肤菜单");
   button.setAttribute("aria-expanded", "false");
   button.title = "Codex 主题切换";
-  button.style.cssText = "display:block;margin:0 auto;width:30px;height:30px;border-radius:50%;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.82);backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,.14);cursor:pointer;font-size:15px;padding:0;-webkit-app-region:no-drag;";
+  button.style.cssText = "display:flex;align-items:center;justify-content:center;margin:0;width:30px;height:24px;border-radius:5px;border:1px solid rgba(82,103,121,.3);background:rgba(255,255,255,.94);color:#526779;box-shadow:0 1px 3px rgba(24,45,63,.12);cursor:pointer;padding:0;-webkit-app-region:no-drag;";
   const triggerGlyph = document.createElement("span");
-  triggerGlyph.dataset.heigeRole = "menu-trigger-glyph";
-  triggerGlyph.textContent = "\\u{1F3A8}";
+  triggerGlyph.dataset.codexThemesRole = "menu-trigger-glyph";
+  triggerGlyph.style.cssText = "display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;";
   triggerGlyph.setAttribute("aria-hidden", "true");
+  const themeIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  themeIcon.setAttribute("data-codex-themes-role", "theme-icon");
+  themeIcon.setAttribute("viewBox", "0 0 20 20");
+  themeIcon.setAttribute("width", "18");
+  themeIcon.setAttribute("height", "18");
+  themeIcon.setAttribute("fill", "none");
+  const themeIconCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  themeIconCircle.setAttribute("cx", "10");
+  themeIconCircle.setAttribute("cy", "10");
+  themeIconCircle.setAttribute("r", "6.5");
+  themeIconCircle.setAttribute("stroke", "currentColor");
+  themeIconCircle.setAttribute("stroke-width", "1.5");
+  const themeIconHalf = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  themeIconHalf.setAttribute("d", "M10 3.5a6.5 6.5 0 0 0 0 13Z");
+  themeIconHalf.setAttribute("fill", "currentColor");
+  themeIconHalf.setAttribute("opacity", ".18");
+  const themeIconDivider = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  themeIconDivider.setAttribute("d", "M10 3.5v13");
+  themeIconDivider.setAttribute("stroke", "currentColor");
+  themeIconDivider.setAttribute("stroke-width", "1.5");
+  themeIcon.append(themeIconCircle, themeIconHalf, themeIconDivider);
+  triggerGlyph.appendChild(themeIcon);
   button.appendChild(triggerGlyph);
 
   const panel = document.createElement("div");
   panel.id = data.menuId + "-panel";
-  panel.dataset.heigeRole = "menu-panel";
+  panel.dataset.codexThemesRole = "menu-panel";
   panel.style.cssText = "display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;width:330px;max-width:calc(100vw - 24px);max-height:calc(100vh - 58px);overflow-y:auto;overscroll-behavior:contain;padding:6px;border-radius:12px;border:1px solid rgba(0,0,0,.1);background:rgba(255,255,255,.94);backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,.18);color:#17344f;-webkit-app-region:no-drag;";
   button.setAttribute("aria-controls", panel.id);
   let hidden = false;
@@ -424,7 +473,7 @@ export function buildSkinMenuScript({
   const row = (label, dotColor, onPick, before, { role = "menu-action", selectable = false } = {}) => {
     const item = document.createElement("button");
     item.type = "button";
-    item.dataset.heigeRole = role;
+    item.dataset.codexThemesRole = role;
     if (selectable) item.setAttribute("aria-pressed", "false");
     item.style.cssText = "display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;text-align:left;";
     const dot = document.createElement("span");
@@ -436,7 +485,7 @@ export function buildSkinMenuScript({
     listen(item, "mouseenter", () => { if (item.style.fontWeight !== "700") item.style.background = "rgba(0,0,0,.05)"; });
     // 先无条件复位再 paint：上传行/隐藏行不在 rows 里，paint 遍历不到它们，
     // 只靠 paint 会让这两行的 hover 灰底永久残留
-    listen(item, "mouseleave", () => { item.style.background = "transparent"; paint(document.documentElement.dataset.heigeCodexSkin ?? null); });
+    listen(item, "mouseleave", () => { item.style.background = "transparent"; paint(document.documentElement.dataset.codexThemesSkin ?? null); });
     listen(item, "click", () => onPick(item));
     if (before) panel.insertBefore(item, before); else panel.appendChild(item);
     return item;
@@ -452,7 +501,8 @@ export function buildSkinMenuScript({
     const theme = data.themes.find((candidate) => candidate.id === id);
     if (!theme) return;
     style.textContent = theme.css;
-    document.documentElement.dataset.heigeCodexSkin = theme.id;
+    document.documentElement.dataset.codexThemesSkin = theme.id;
+    syncThemeMenuAnchor();
     syncXpQqDiffShadows();
     paint(theme.id);
     if (persist) writeSelected(theme.id);
@@ -460,8 +510,14 @@ export function buildSkinMenuScript({
   };
   const clearTheme = (persist = true, broadcast = true) => {
     if (!alive()) return;
+    // Theme-owned DOM must be removed synchronously. Relying on the dataset
+    // MutationObserver leaves one render where XP QQ proxies coexist with the
+    // restored native navigation, and can strand them if React replaces the
+    // observed subtree during that render.
+    restoreXpQqSidebarActions();
     style.textContent = "";
-    delete document.documentElement.dataset.heigeCodexSkin;
+    delete document.documentElement.dataset.codexThemesSkin;
+    syncThemeMenuAnchor();
     syncXpQqDiffShadows();
     paint(null);
     if (persist) writeSelected(data.nativeSel);
@@ -480,7 +536,7 @@ export function buildSkinMenuScript({
         if (applied) setPanelOpen(false, { focusTrigger: true });
       });
     }, null, { role: "theme-option", selectable: true });
-    themeRow.dataset.heigeThemeId = theme.id;
+    themeRow.dataset.codexThemesThemeId = theme.id;
     rows.set(theme.id, themeRow);
   }
 
@@ -622,7 +678,7 @@ export function buildSkinMenuScript({
       signal.removeEventListener("abort", onAbort);
       callback(value);
     };
-    const onAbort = () => finish(reject, new DOMException("HeiGe menu generation disposed", "AbortError"));
+    const onAbort = () => finish(reject, new DOMException("CodexThemes menu generation disposed", "AbortError"));
     const timeoutId = later(() => finish(reject, imageError(label + "超时，请重试")), data.limits.browserOperationMs);
     signal.addEventListener("abort", onAbort, { once: true });
     Promise.resolve().then(operation).then(
@@ -650,7 +706,7 @@ export function buildSkinMenuScript({
     };
     const onAbort = () => {
       try { reader.abort(); } catch {}
-      finish(reject, new DOMException("HeiGe menu generation disposed", "AbortError"));
+      finish(reject, new DOMException("CodexThemes menu generation disposed", "AbortError"));
     };
     const timeoutId = later(() => {
       finish(reject, imageError("文件读取超时，请重试"));
@@ -663,7 +719,7 @@ export function buildSkinMenuScript({
       else finish(resolve, reader.result);
     };
     reader.onerror = () => finish(reject, imageError("文件读取失败，请重试"));
-    reader.onabort = () => finish(reject, isCurrent() ? imageError("文件读取已取消") : new DOMException("HeiGe menu generation disposed", "AbortError"));
+    reader.onabort = () => finish(reject, isCurrent() ? imageError("文件读取已取消") : new DOMException("CodexThemes menu generation disposed", "AbortError"));
     try { reader.readAsDataURL(file); }
     catch (error) { finish(reject, error); }
   });
@@ -671,8 +727,8 @@ export function buildSkinMenuScript({
   const avatarButton = document.createElement("button");
   avatarButton.id = data.avatar.buttonId;
   avatarButton.type = "button";
-  avatarButton.dataset.heigeGeneration = generation;
-  avatarButton.dataset.heigeRole = "xp-qq-avatar-editor";
+  avatarButton.dataset.codexThemesGeneration = generation;
+  avatarButton.dataset.codexThemesRole = "xp-qq-avatar-editor";
   avatarButton.setAttribute("aria-label", "更换 QQ 头像");
   avatarButton.title = "更换 QQ 头像";
   const avatarButtonLabel = document.createElement("span");
@@ -683,13 +739,13 @@ export function buildSkinMenuScript({
   avatarPicker.id = data.avatar.inputId;
   avatarPicker.type = "file";
   avatarPicker.accept = "image/png,image/jpeg,image/webp";
-  avatarPicker.dataset.heigeGeneration = generation;
+  avatarPicker.dataset.codexThemesGeneration = generation;
   avatarPicker.style.display = "none";
 
   const avatarNotice = document.createElement("div");
   avatarNotice.id = data.avatar.noticeId;
-  avatarNotice.dataset.heigeGeneration = generation;
-  avatarNotice.dataset.heigeRole = "xp-qq-avatar-notice";
+  avatarNotice.dataset.codexThemesGeneration = generation;
+  avatarNotice.dataset.codexThemesRole = "xp-qq-avatar-notice";
   avatarNotice.setAttribute("role", "status");
   avatarNotice.setAttribute("aria-live", "polite");
   avatarNotice.hidden = true;
@@ -716,10 +772,10 @@ export function buildSkinMenuScript({
       || parsed.metadata.height !== data.avatar.outputSide
     ) return false;
     document.documentElement.style.setProperty(
-      "--heige-xp-qq-avatar-image",
+      "--codex-themes-xp-qq-avatar-image",
       'url("' + dataUrl + '")',
     );
-    document.documentElement.dataset.heigeXpQqAvatar = "custom";
+    document.documentElement.dataset.codexThemesXpQqAvatar = "custom";
     return true;
   };
 
@@ -751,7 +807,7 @@ export function buildSkinMenuScript({
       callback(value);
     };
     const fail = (error) => finish(reject, error);
-    const onAbort = () => fail(new DOMException("HeiGe menu generation disposed", "AbortError"));
+    const onAbort = () => fail(new DOMException("CodexThemes menu generation disposed", "AbortError"));
     const timeoutId = later(() => {
       fail(imageError("头像解码超时，请重试"));
       try { img.src = ""; } catch {}
@@ -803,7 +859,7 @@ export function buildSkinMenuScript({
         fail(error);
       }
     };
-    img.onerror = () => fail(isCurrent() ? imageError("头像解码失败") : new DOMException("HeiGe menu generation disposed", "AbortError"));
+    img.onerror = () => fail(isCurrent() ? imageError("头像解码失败") : new DOMException("CodexThemes menu generation disposed", "AbortError"));
     try { img.src = dataUrl; }
     catch (error) { fail(error); }
   });
@@ -860,46 +916,46 @@ export function buildSkinMenuScript({
   // ---- XP QQ identity: nickname, signature and a compact classic level mark ----
   const profileCard = document.createElement("section");
   profileCard.id = data.profile.cardId;
-  profileCard.dataset.heigeGeneration = generation;
-  profileCard.dataset.heigeRole = "xp-qq-profile";
+  profileCard.dataset.codexThemesGeneration = generation;
+  profileCard.dataset.codexThemesRole = "xp-qq-profile";
   profileCard.setAttribute("aria-label", "QQ 资料");
 
   const profileNickname = document.createElement("strong");
-  profileNickname.dataset.heigeRole = "xp-qq-profile-nickname";
+  profileNickname.dataset.codexThemesRole = "xp-qq-profile-nickname";
   const profileSignature = document.createElement("span");
-  profileSignature.dataset.heigeRole = "xp-qq-profile-signature";
+  profileSignature.dataset.codexThemesRole = "xp-qq-profile-signature";
   const profileLevel = document.createElement("span");
-  profileLevel.dataset.heigeRole = "xp-qq-profile-level";
+  profileLevel.dataset.codexThemesRole = "xp-qq-profile-level";
 
   const profileEditor = document.createElement("button");
   profileEditor.id = data.profile.editorId;
   profileEditor.type = "button";
-  profileEditor.dataset.heigeRole = "xp-qq-profile-editor";
+  profileEditor.dataset.codexThemesRole = "xp-qq-profile-editor";
   profileEditor.setAttribute("aria-label", "编辑 QQ 资料");
   profileEditor.setAttribute("aria-expanded", "false");
   profileEditor.title = "编辑网名、签名和等级";
   profileEditor.textContent = "✎";
   const profileHeadingRow = document.createElement("div");
-  profileHeadingRow.dataset.heigeRole = "xp-qq-profile-heading-row";
+  profileHeadingRow.dataset.codexThemesRole = "xp-qq-profile-heading-row";
   profileHeadingRow.append(profileNickname, profileEditor);
   profileCard.append(profileHeadingRow, profileSignature, profileLevel);
 
   const profilePanel = document.createElement("form");
   profilePanel.id = data.profile.panelId;
-  profilePanel.dataset.heigeGeneration = generation;
-  profilePanel.dataset.heigeRole = "xp-qq-profile-panel";
+  profilePanel.dataset.codexThemesGeneration = generation;
+  profilePanel.dataset.codexThemesRole = "xp-qq-profile-panel";
   profilePanel.setAttribute("role", "dialog");
   profilePanel.setAttribute("aria-modal", "false");
   profilePanel.setAttribute("aria-label", "编辑 QQ 资料");
   profilePanel.hidden = true;
 
   const profileHeading = document.createElement("strong");
-  profileHeading.dataset.heigeRole = "xp-qq-profile-heading";
+  profileHeading.dataset.codexThemesRole = "xp-qq-profile-heading";
   profileHeading.textContent = "编辑 QQ 资料";
 
   const profileField = (labelText, control) => {
     const label = document.createElement("label");
-    label.dataset.heigeRole = "xp-qq-profile-field";
+    label.dataset.codexThemesRole = "xp-qq-profile-field";
     const caption = document.createElement("span");
     caption.textContent = labelText;
     label.append(caption, control);
@@ -929,13 +985,13 @@ export function buildSkinMenuScript({
   }
 
   const profileFeedback = document.createElement("div");
-  profileFeedback.dataset.heigeRole = "xp-qq-profile-feedback";
+  profileFeedback.dataset.codexThemesRole = "xp-qq-profile-feedback";
   profileFeedback.setAttribute("role", "status");
   profileFeedback.setAttribute("aria-live", "polite");
   profileFeedback.hidden = true;
 
   const profileActions = document.createElement("div");
-  profileActions.dataset.heigeRole = "xp-qq-profile-actions";
+  profileActions.dataset.codexThemesRole = "xp-qq-profile-actions";
   const profileCancel = document.createElement("button");
   profileCancel.type = "button";
   profileCancel.textContent = "取消";
@@ -998,13 +1054,13 @@ export function buildSkinMenuScript({
   };
 
   clearXpQqUserNames = () => {
-    for (const bubble of document.querySelectorAll("[data-heige-xp-qq-nickname]")) {
-      bubble.removeAttribute("data-heige-xp-qq-nickname");
+    for (const bubble of document.querySelectorAll("[data-codex-themes-xp-qq-nickname]")) {
+      bubble.removeAttribute("data-codex-themes-xp-qq-nickname");
     }
   };
   syncXpQqUserNames = () => {
     if (!isCurrent()) return;
-    const active = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    const active = document.documentElement.dataset.codexThemesSkin === "xp-qq";
     profileCard.style.display = active ? "" : "none";
     avatarButton.style.display = active ? "" : "none";
     if (!active) {
@@ -1013,8 +1069,8 @@ export function buildSkinMenuScript({
       return;
     }
     for (const bubble of document.querySelectorAll("[data-user-message-bubble]")) {
-      if (bubble.getAttribute("data-heige-xp-qq-nickname") !== currentXpQqProfile.nickname) {
-        bubble.setAttribute("data-heige-xp-qq-nickname", currentXpQqProfile.nickname);
+      if (bubble.getAttribute("data-codex-themes-xp-qq-nickname") !== currentXpQqProfile.nickname) {
+        bubble.setAttribute("data-codex-themes-xp-qq-nickname", currentXpQqProfile.nickname);
       }
     }
   };
@@ -1073,7 +1129,7 @@ export function buildSkinMenuScript({
   const profileObserver = new MutationObserver(syncXpQqUserNames);
   profileObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-heige-codex-skin"],
+    attributeFilter: ["data-codex-themes-skin"],
     childList: true,
     subtree: true,
   });
@@ -1087,21 +1143,21 @@ export function buildSkinMenuScript({
     if (modeSwitchNativeAnchor?.isConnected) {
       if (modeSwitchNativeInlineStyle === null) modeSwitchNativeAnchor.removeAttribute("style");
       else modeSwitchNativeAnchor.setAttribute("style", modeSwitchNativeInlineStyle);
-      modeSwitchNativeAnchor.removeAttribute("data-heige-native-mode-anchor");
+      modeSwitchNativeAnchor.removeAttribute("data-codex-themes-native-mode-anchor");
     }
     modeSwitchNativeAnchor = null;
     modeSwitchNativeInlineStyle = null;
   };
   clearXpQqModeSwitch = () => {
     restoreNativeModeAnchor();
-    modeSwitchNode?.removeAttribute("data-heige-native-mode-hidden");
+    modeSwitchNode?.removeAttribute("data-codex-themes-native-mode-hidden");
     modeSwitchProxy?.remove();
     modeSwitchNode = null;
     modeSwitchProxy = null;
   };
   const syncXpQqModeSwitch = () => {
     if (!isCurrent()) return;
-    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
     const modeButton = document.querySelector('button[aria-label^="切换模式"]');
     const candidate = modeButton?.parentElement ?? null;
     if (candidate && candidate !== modeSwitchNode) {
@@ -1120,11 +1176,11 @@ export function buildSkinMenuScript({
       modeSwitchNativeAnchor = nativeButton;
       modeSwitchNativeInlineStyle = nativeButton.getAttribute("style");
     }
-    modeSwitchNode.setAttribute("data-heige-native-mode-hidden", "true");
+    modeSwitchNode.setAttribute("data-codex-themes-native-mode-hidden", "true");
     const alignNativeModeAnchor = (target) => {
       if (!target?.isConnected || !modeSwitchProxy?.isConnected) return;
       const proxyRect = modeSwitchProxy.getBoundingClientRect();
-      target.dataset.heigeNativeModeAnchor = "true";
+      target.dataset.codexThemesNativeModeAnchor = "true";
       target.style.setProperty("position", "fixed", "important");
       target.style.setProperty("left", proxyRect.left + "px", "important");
       target.style.setProperty("top", proxyRect.top + "px", "important");
@@ -1149,9 +1205,9 @@ export function buildSkinMenuScript({
     };
     if (!modeSwitchProxy?.isConnected) {
       modeSwitchProxy = document.createElement("button");
-      modeSwitchProxy.id = "heige-xp-qq-mode-switch";
+      modeSwitchProxy.id = "codex-themes-xp-qq-mode-switch";
       modeSwitchProxy.type = "button";
-      modeSwitchProxy.dataset.heigeRole = "xp-qq-mode-switch";
+      modeSwitchProxy.dataset.codexThemesRole = "xp-qq-mode-switch";
       modeSwitchProxy.setAttribute("aria-haspopup", "menu");
       const openNativeModeMenu = () => {
         const target = modeSwitchNode?.querySelector('button[aria-label^="切换模式"]');
@@ -1194,7 +1250,7 @@ export function buildSkinMenuScript({
   const modeSwitchObserver = new MutationObserver(syncXpQqModeSwitch);
   modeSwitchObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["aria-label", "data-heige-codex-skin", "data-state", "disabled"],
+    attributeFilter: ["aria-label", "data-codex-themes-skin", "data-state", "disabled"],
     childList: true,
     subtree: true,
   });
@@ -1215,18 +1271,24 @@ export function buildSkinMenuScript({
     return node?.parentElement === rootNode ? node : null;
   };
   restoreXpQqSidebarActions = () => {
-    for (const node of sidebarActionNativeNodes) {
-      node.removeAttribute("data-heige-native-action-hidden");
-      delete node.dataset.heigeSidebarActionsGeneration;
+    // Reclaim all owned nodes, including leftovers created by an older runtime
+    // generation. A reload can replace the runtime before its in-memory arrays
+    // are available to this generation, but ownership attributes remain a
+    // reliable cleanup boundary.
+    for (const node of document.querySelectorAll("[data-codex-themes-native-action-hidden]")) {
+      node.removeAttribute("data-codex-themes-native-action-hidden");
+      delete node.dataset.codexThemesSidebarActionsGeneration;
+    }
+    for (const toolbar of document.querySelectorAll('[data-codex-themes-role="xp-qq-sidebar-actions"]')) {
+      toolbar.remove();
     }
     sidebarActionNativeNodes = [];
     sidebarActionNativeButtons = [];
-    sidebarActionsToolbar?.remove();
     sidebarActionsToolbar = null;
   };
   const syncXpQqSidebarActions = () => {
     if (!isCurrent()) return;
-    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
     if (!xpQqActive) {
       restoreXpQqSidebarActions();
       return;
@@ -1257,8 +1319,8 @@ export function buildSkinMenuScript({
     if (!newTaskRow || !newTaskSource || !quickActionSource) return;
     const toolbar = document.createElement("div");
     toolbar.id = data.sidebarActionsId;
-    toolbar.dataset.heigeRole = "xp-qq-sidebar-actions";
-    toolbar.dataset.heigeGeneration = generation;
+    toolbar.dataset.codexThemesRole = "xp-qq-sidebar-actions";
+    toolbar.dataset.codexThemesGeneration = generation;
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "主要功能");
     nav.insertBefore(toolbar, newTaskSource);
@@ -1266,15 +1328,15 @@ export function buildSkinMenuScript({
     sidebarActionNativeNodes = [newTaskRow, ...buttons.slice(1)];
     sidebarActionNativeButtons = buttons;
     for (const node of sidebarActionNativeNodes) {
-      node.dataset.heigeSidebarActionsGeneration = generation;
-      node.setAttribute("data-heige-native-action-hidden", "true");
+      node.dataset.codexThemesSidebarActionsGeneration = generation;
+      node.setAttribute("data-codex-themes-native-action-hidden", "true");
     }
     buttons.forEach((nativeButton, index) => {
       const proxy = document.createElement("button");
       proxy.type = "button";
-      proxy.dataset.heigeRole = "xp-qq-sidebar-action";
-      proxy.dataset.heigeSidebarActionLabel = sidebarActionLabels[index];
-      proxy.dataset.heigeSidebarActionsGeneration = generation;
+      proxy.dataset.codexThemesRole = "xp-qq-sidebar-action";
+      proxy.dataset.codexThemesSidebarActionLabel = sidebarActionLabels[index];
+      proxy.dataset.codexThemesSidebarActionsGeneration = generation;
       proxy.setAttribute("aria-label", sidebarActionLabels[index]);
       proxy.disabled = nativeButton.disabled;
       const icon = nativeButton.querySelector("svg")?.cloneNode(true) ?? null;
@@ -1283,7 +1345,7 @@ export function buildSkinMenuScript({
         proxy.appendChild(icon);
       }
       const label = document.createElement("span");
-      label.className = "heige-xp-qq-sidebar-action-label";
+      label.className = "codex-themes-xp-qq-sidebar-action-label";
       label.textContent = sidebarActionLabels[index];
       proxy.appendChild(label);
       listen(proxy, "click", () => {
@@ -1296,7 +1358,7 @@ export function buildSkinMenuScript({
   const sidebarActionsObserver = new MutationObserver(syncXpQqSidebarActions);
   sidebarActionsObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-heige-codex-skin"],
+    attributeFilter: ["data-codex-themes-skin"],
     childList: true,
     subtree: true,
   });
@@ -1307,20 +1369,20 @@ export function buildSkinMenuScript({
    * pointer-inert presence dot derived from real runtime state. */
   clearXpQqContacts = () => {
     for (const node of document.querySelectorAll(
-      '[data-heige-contact-generation="' + generation + '"]',
+      '[data-codex-themes-contact-generation="' + generation + '"]',
     )) {
-      if (node.dataset.heigeRole === "xp-qq-contact-presence") {
+      if (node.dataset.codexThemesRole === "xp-qq-contact-presence") {
         node.remove();
         continue;
       }
-      delete node.dataset.heigeRole;
-      delete node.dataset.heigeContactGeneration;
-      delete node.dataset.heigeContactInitial;
-      delete node.dataset.heigeContactTone;
-      delete node.dataset.heigeContactProject;
-      delete node.dataset.heigeContactStatus;
-      delete node.dataset.heigeContactState;
-      delete node.dataset.heigeContactCount;
+      delete node.dataset.codexThemesRole;
+      delete node.dataset.codexThemesContactGeneration;
+      delete node.dataset.codexThemesContactInitial;
+      delete node.dataset.codexThemesContactTone;
+      delete node.dataset.codexThemesContactProject;
+      delete node.dataset.codexThemesContactStatus;
+      delete node.dataset.codexThemesContactState;
+      delete node.dataset.codexThemesContactCount;
     }
   };
   const setContactData = (node, key, value) => {
@@ -1333,7 +1395,7 @@ export function buildSkinMenuScript({
   };
   const syncXpQqContacts = () => {
     if (!isCurrent()) return;
-    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
     if (!xpQqActive) {
       clearXpQqContacts();
       return;
@@ -1348,9 +1410,9 @@ export function buildSkinMenuScript({
         candidate.dataset.appActionSidebarProjectListId === projectId
       ));
       const count = projectList?.querySelectorAll("[data-app-action-sidebar-thread-row]").length ?? 0;
-      setContactData(project, "heigeRole", "xp-qq-contact-group");
-      setContactData(project, "heigeContactGeneration", generation);
-      setContactData(project, "heigeContactCount", String(count));
+      setContactData(project, "codexThemesRole", "xp-qq-contact-group");
+      setContactData(project, "codexThemesContactGeneration", generation);
+      setContactData(project, "codexThemesContactCount", String(count));
     }
 
     for (const row of document.querySelectorAll("[data-app-action-sidebar-thread-row]")) {
@@ -1365,27 +1427,27 @@ export function buildSkinMenuScript({
       const pinned = row.dataset.appActionSidebarThreadPinned === "true";
       const state = running ? "running" : active ? "active" : pinned ? "pinned" : "idle";
       const status = xpQqContactStatus(state);
-      setContactData(row, "heigeRole", "xp-qq-contact");
-      setContactData(row, "heigeContactGeneration", generation);
-      setContactData(row, "heigeContactInitial", identity.initial);
-      setContactData(row, "heigeContactTone", String(identity.tone));
-      setContactData(row, "heigeContactProject", project);
-      setContactData(row, "heigeContactStatus", status);
-      setContactData(row, "heigeContactState", state);
+      setContactData(row, "codexThemesRole", "xp-qq-contact");
+      setContactData(row, "codexThemesContactGeneration", generation);
+      setContactData(row, "codexThemesContactInitial", identity.initial);
+      setContactData(row, "codexThemesContactTone", String(identity.tone));
+      setContactData(row, "codexThemesContactProject", project);
+      setContactData(row, "codexThemesContactStatus", status);
+      setContactData(row, "codexThemesContactState", state);
 
-      let presence = row.querySelector(':scope > [data-heige-role="xp-qq-contact-presence"]');
+      let presence = row.querySelector(':scope > [data-codex-themes-role="xp-qq-contact-presence"]');
       if (state !== "running" && state !== "active") {
         presence?.remove();
         continue;
       }
       if (!presence) {
         presence = document.createElement("span");
-        presence.dataset.heigeRole = "xp-qq-contact-presence";
-        presence.dataset.heigeContactGeneration = generation;
+        presence.dataset.codexThemesRole = "xp-qq-contact-presence";
+        presence.dataset.codexThemesContactGeneration = generation;
         presence.setAttribute("aria-hidden", "true");
         row.appendChild(presence);
       }
-      setContactData(presence, "heigeContactState", state);
+      setContactData(presence, "codexThemesContactState", state);
     }
   };
   syncXpQqContacts();
@@ -1393,7 +1455,7 @@ export function buildSkinMenuScript({
   contactObserver.observe(document.documentElement, {
     attributes: true,
     attributeFilter: [
-      "data-heige-codex-skin",
+      "data-codex-themes-skin",
       "data-app-action-sidebar-thread-active",
       "data-app-action-sidebar-thread-pinned",
       "aria-expanded",
@@ -1406,27 +1468,47 @@ export function buildSkinMenuScript({
 
   const fileTitle = document.createElement("div");
   fileTitle.id = data.fileTitleId;
-  fileTitle.dataset.heigeGeneration = generation;
-  fileTitle.dataset.heigeRole = "xp-qq-file-title";
+  fileTitle.dataset.codexThemesGeneration = generation;
+  fileTitle.dataset.codexThemesRole = "xp-qq-file-title";
   fileTitle.textContent = "文件浏览器";
   fileTitle.setAttribute("aria-hidden", "true");
   fileTitle.hidden = true;
   document.body.appendChild(fileTitle);
 
-  let fileToolbar = null;
+  let rightPanelToolbar = null;
+  let fileSurfaceMain = null;
   let fileTitleResizeObserver = null;
   const syncXpQqFileTitle = () => {
     if (!isCurrent()) return;
-    const nextToolbar = document.querySelector(
-      '.isolate:has(> [role="tabpanel"][aria-label="打开文件"]) > .h-toolbar',
+    const nextRightPanel = document.querySelector(
+      'main.main-surface aside [role="tabpanel"][data-app-shell-tab-panel-controller="right"]',
     );
-    if (nextToolbar !== fileToolbar) {
+    const nextToolbar = nextRightPanel?.parentElement?.querySelector(":scope > .h-toolbar") ?? null;
+    if (nextToolbar !== rightPanelToolbar) {
       fileTitleResizeObserver?.disconnect();
-      fileToolbar = nextToolbar;
-      if (fileToolbar) fileTitleResizeObserver?.observe(fileToolbar);
+      rightPanelToolbar = nextToolbar;
+      if (rightPanelToolbar) fileTitleResizeObserver?.observe(rightPanelToolbar);
     }
-    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
-    if (!xpQqActive || !fileToolbar || fileToolbar.getClientRects().length === 0) {
+    const nextMain = rightPanelToolbar?.closest("main.main-surface") ?? null;
+    if (nextMain !== fileSurfaceMain) {
+      fileSurfaceMain?.style.removeProperty("--codex-themes-xp-qq-file-panel-inset");
+      fileSurfaceMain = nextMain;
+    }
+    const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
+    if (xpQqActive && rightPanelToolbar && fileSurfaceMain) {
+      const mainRect = fileSurfaceMain.getBoundingClientRect();
+      const panelRect = rightPanelToolbar.parentElement.getBoundingClientRect();
+      const panelInset = Math.max(0, Math.round(mainRect.right - panelRect.left));
+      fileSurfaceMain.style.setProperty("--codex-themes-xp-qq-file-panel-inset", panelInset + "px");
+    } else {
+      fileSurfaceMain?.style.removeProperty("--codex-themes-xp-qq-file-panel-inset");
+    }
+    const fileToolbar = nextRightPanel?.matches('[data-tab-id^="file:"]')
+      ? rightPanelToolbar
+      : null;
+    const visibleNativeTab = [...(fileToolbar?.querySelectorAll('[role="tab"]') ?? [])]
+      .some((tab) => tab.textContent?.trim() && tab.getClientRects().length > 0);
+    if (!xpQqActive || !fileToolbar || visibleNativeTab || fileToolbar.getClientRects().length === 0) {
       if (!fileTitle.hidden) fileTitle.hidden = true;
       return;
     }
@@ -1444,7 +1526,7 @@ export function buildSkinMenuScript({
   const fileTitleObserver = new MutationObserver(syncXpQqFileTitle);
   fileTitleObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-heige-codex-skin", "style"],
+    attributeFilter: ["data-codex-themes-skin", "style"],
     childList: true,
     subtree: true,
   });
@@ -1455,23 +1537,23 @@ export function buildSkinMenuScript({
    * existing heading and working suggestion buttons as a chat transcript. */
   const markXpQqWelcomeRole = (node, role) => {
     if (!node) return;
-    if (node.dataset.heigeRole !== role) node.dataset.heigeRole = role;
-    if (node.dataset.heigeWelcomeGeneration !== generation) {
-      node.dataset.heigeWelcomeGeneration = generation;
+    if (node.dataset.codexThemesRole !== role) node.dataset.codexThemesRole = role;
+    if (node.dataset.codexThemesWelcomeGeneration !== generation) {
+      node.dataset.codexThemesWelcomeGeneration = generation;
     }
   };
   clearXpQqWelcomeRoles = () => {
     for (const node of document.querySelectorAll(
-      '[data-heige-welcome-generation="' + generation + '"]',
+      '[data-codex-themes-welcome-generation="' + generation + '"]',
     )) {
-      delete node.dataset.heigeRole;
-      delete node.dataset.heigeWelcomeGeneration;
+      delete node.dataset.codexThemesRole;
+      delete node.dataset.codexThemesWelcomeGeneration;
     }
   };
   let xpQqWelcomeSection = null;
   const syncXpQqWelcome = () => {
     if (!isCurrent()) return;
-    const xpQqActive = document.documentElement.dataset.heigeCodexSkin === "xp-qq";
+    const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
     const section = xpQqActive
       ? document.querySelector('section[class*="group/home-suggestions"]')
       : null;
@@ -1501,7 +1583,7 @@ export function buildSkinMenuScript({
   const welcomeObserver = new MutationObserver(syncXpQqWelcome);
   welcomeObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-heige-codex-skin"],
+    attributeFilter: ["data-codex-themes-skin"],
     childList: true,
     subtree: true,
   });
@@ -1509,16 +1591,13 @@ export function buildSkinMenuScript({
 
   /* Codex renders review diffs inside an open shadow root. Its generated
    * dark palette cannot be corrected from the document stylesheet alone. */
-  const diffShadowStyleId = "heige-xp-qq-diff-shadow-style";
+  const diffShadowStyleId = "codex-themes-xp-qq-diff-shadow-style";
   const xpQqDiffShadowCss = [
     "@layer base {",
     ":host { color-scheme: light !important; color: #20364a !important; background-color: #ffffff !important; --diffs-bg: #ffffff !important; --diffs-fg: #20364a !important; --diffs-dark: #20364a !important; --diffs-light: #20364a !important; }",
     ":is([data-diff], [data-file]) { --diffs-bg: #ffffff !important; --diffs-fg: #20364a !important; --diffs-mixer: #20364a !important; --diffs-addition-base: #2f8f61 !important; --diffs-deletion-base: #c94f52 !important; --diffs-addition-color: #176a45 !important; --diffs-deletion-color: #a92f35 !important; --diffs-bg-addition: #e8f5ee !important; --diffs-bg-deletion: #fdeceb !important; --diffs-bg-addition-emphasis: #cfe9db !important; --diffs-bg-deletion-emphasis: #f5d4d2 !important; --diffs-bg-context: #ffffff !important; --diffs-bg-context-gutter: #f5f9fc !important; --diffs-bg-buffer: #f5f9fc !important; --diffs-bg-separator: #e6eef4 !important; --diffs-fg-number: #6f8394 !important; }",
     "[data-line-type='change-addition']:is([data-line], [data-no-newline]) { --diffs-computed-diff-line-bg: #e8f5ee !important; }",
     "[data-line-type='change-deletion']:is([data-line], [data-no-newline]) { --diffs-computed-diff-line-bg: #fdeceb !important; }",
-    "[data-code] [data-line] span { color: #20364a !important; }",
-    "[data-code] [data-line-type='change-addition'][data-line] span { color: #204f39 !important; }",
-    "[data-code] [data-line-type='change-deletion'][data-line] span { color: #6f3033 !important; }",
     "}",
   ].join("");
   const observedDiffShadows = new WeakSet();
@@ -1533,7 +1612,7 @@ export function buildSkinMenuScript({
   };
   const syncXpQqDiffShadows = () => {
     if (!isCurrent()) return;
-    if (document.documentElement.dataset.heigeCodexSkin !== "xp-qq") {
+    if (document.documentElement.dataset.codexThemesSkin !== "xp-qq") {
       removeXpQqDiffShadowStyles();
       return;
     }
@@ -1552,7 +1631,7 @@ export function buildSkinMenuScript({
         shadowStyle.id = diffShadowStyleId;
         shadow.appendChild(shadowStyle);
       }
-      shadowStyle.dataset.heigeGeneration = generation;
+      shadowStyle.dataset.codexThemesGeneration = generation;
       if (shadowStyle.textContent !== xpQqDiffShadowCss) {
         shadowStyle.textContent = xpQqDiffShadowCss;
       }
@@ -1564,7 +1643,7 @@ export function buildSkinMenuScript({
   const diffShadowObserver = new MutationObserver(syncXpQqDiffShadows);
   diffShadowObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-heige-codex-skin"],
+    attributeFilter: ["data-codex-themes-skin"],
     childList: true,
     subtree: true,
   });
@@ -1575,7 +1654,7 @@ export function buildSkinMenuScript({
       if (applied) setPanelOpen(false, { focusTrigger: true });
     });
   }, null, { role: "native-option", selectable: true });
-  native.dataset.heigeThemeId = data.nativeSel;
+  native.dataset.codexThemesThemeId = data.nativeSel;
   rows.set(null, native);
 
   // ---- 常驻开关：只显示控制器确认的真实状态，不使用 localStorage 伪造持久化 ----
@@ -1584,7 +1663,7 @@ export function buildSkinMenuScript({
   let controlRequest = null;
   if (data.control?.available === true) {
     const section = document.createElement("section");
-    section.dataset.heigeRole = "persistence-section";
+    section.dataset.codexThemesRole = "persistence-section";
     section.style.cssText = "margin-top:6px;padding:10px;border-top:1px solid rgba(23,52,79,.1);background:rgba(36,201,215,.055);border-radius:9px;";
 
     const heading = document.createElement("div");
@@ -1597,13 +1676,13 @@ export function buildSkinMenuScript({
     headingTitle.style.cssText = "font-weight:750;letter-spacing:.01em;color:#17344f;";
     const headingState = document.createElement("div");
     headingState.id = data.menuId + "-persistence-state";
-    headingState.dataset.heigeRole = "persistence-state";
+    headingState.dataset.codexThemesRole = "persistence-state";
     headingState.style.cssText = "margin-top:1px;font-size:11px;color:rgba(23,52,79,.68);";
     headingCopy.append(headingTitle, headingState);
 
     const persistenceSwitch = document.createElement("button");
     persistenceSwitch.type = "button";
-    persistenceSwitch.dataset.heigeRole = "persistence-switch";
+    persistenceSwitch.dataset.codexThemesRole = "persistence-switch";
     persistenceSwitch.setAttribute("role", "switch");
     persistenceSwitch.setAttribute("tabindex", "0");
     persistenceSwitch.setAttribute("aria-labelledby", headingTitle.id);
@@ -1616,13 +1695,13 @@ export function buildSkinMenuScript({
 
     const helper = document.createElement("p");
     helper.id = data.menuId + "-persistence-helper";
-    helper.dataset.heigeRole = "persistence-helper";
+    helper.dataset.codexThemesRole = "persistence-helper";
     helper.textContent = "关闭后，本次继续使用当前主题；下次启动将恢复原生界面。\\n重新启用时，请运行项目安装脚本，再打开此开关。";
     helper.style.cssText = "margin:8px 0 0;white-space:pre-line;font-size:11px;line-height:1.55;color:rgba(23,52,79,.74);";
     persistenceSwitch.setAttribute("aria-describedby", headingState.id + " " + helper.id);
 
     const confirmation = document.createElement("div");
-    confirmation.dataset.heigeRole = "persistence-confirmation";
+    confirmation.dataset.codexThemesRole = "persistence-confirmation";
     confirmation.setAttribute("role", "group");
     confirmation.setAttribute("aria-describedby", helper.id);
     confirmation.setAttribute("aria-busy", "false");
@@ -1637,19 +1716,19 @@ export function buildSkinMenuScript({
     confirmationActions.style.cssText = "display:flex;justify-content:flex-end;gap:7px;margin-top:8px;";
     const cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.dataset.heigeRole = "persistence-cancel";
+    cancel.dataset.codexThemesRole = "persistence-cancel";
     cancel.textContent = "取消";
     cancel.style.cssText = "padding:4px 9px;border:1px solid rgba(23,52,79,.18);border-radius:6px;background:#fff;color:#17344f;cursor:pointer;";
     const confirm = document.createElement("button");
     confirm.type = "button";
-    confirm.dataset.heigeRole = "persistence-confirm";
+    confirm.dataset.codexThemesRole = "persistence-confirm";
     confirm.textContent = "确认关闭";
     confirm.style.cssText = "padding:4px 9px;border:1px solid #a84232;border-radius:6px;background:#a84232;color:#fff;cursor:pointer;";
     confirmationActions.append(cancel, confirm);
     confirmation.append(confirmationText, confirmationActions);
 
     const alert = document.createElement("div");
-    alert.dataset.heigeRole = "persistence-alert";
+    alert.dataset.codexThemesRole = "persistence-alert";
     alert.setAttribute("role", "alert");
     alert.setAttribute("aria-live", "polite");
     alert.hidden = true;
@@ -1744,7 +1823,7 @@ export function buildSkinMenuScript({
     };
     requestThemeSelection = async (themeId) => {
       assertCurrent();
-      const currentThemeId = document.documentElement.dataset.heigeCodexSkin ?? data.nativeSel;
+      const currentThemeId = document.documentElement.dataset.codexThemesSkin ?? data.nativeSel;
       if (themePending || themeId === currentThemeId) return false;
       if (
         themeId !== data.nativeSel &&
@@ -1814,7 +1893,7 @@ export function buildSkinMenuScript({
           referrerPolicy: "no-referrer",
           headers: {
             "Content-Type": "application/json",
-            "X-HeiGe-Control-Token": data.control.token,
+            "X-CodexThemes-Control-Token": data.control.token,
           },
           body: JSON.stringify({ revision: requestRevision, persistenceEnabled: target }),
           signal: abortController.signal,
@@ -1923,6 +2002,7 @@ export function buildSkinMenuScript({
   const readHidden = () => { assertCurrent(); try { return localStorage.getItem(data.hiddenKey) === "1"; } catch { return false; } };
   const writeHidden = (value) => { assertCurrent(); try { if (value) localStorage.setItem(data.hiddenKey, "1"); else localStorage.removeItem(data.hiddenKey); } catch {} };
   const FULL_BUTTON_CSS = button.style.cssText;
+  const FULL_GLYPH_CSS = triggerGlyph.style.cssText;
   const MINI_BUTTON_CSS = "display:block;margin:0 auto;width:24px;height:24px;border:0;background:transparent;box-shadow:none;cursor:pointer;font-size:0;padding:0;-webkit-app-region:no-drag;";
   const setHidden = (value, persist = true, broadcast = true) => {
     assertCurrent();
@@ -1931,10 +2011,10 @@ export function buildSkinMenuScript({
     if (value) setPanelOpen(false, { focusTrigger: panelHadFocus });
     hidden = value;
     button.style.cssText = value ? MINI_BUTTON_CSS : FULL_BUTTON_CSS;
-    triggerGlyph.textContent = value ? "" : "\\u{1F3A8}";
     triggerGlyph.style.cssText = value
       ? "display:block;margin:auto;width:10px;height:10px;border-radius:50%;background:#66788a;box-shadow:0 1px 4px rgba(0,0,0,.18);opacity:.55;"
-      : "";
+      : FULL_GLYPH_CSS;
+    themeIcon.style.display = value ? "none" : "";
     button.title = value ? "\\u663e\\u793a\\u6362\\u80a4\\u6309\\u94ae" : "Codex 主题切换";
     setPanelOpen(false);
     if (persist) writeHidden(value);
@@ -2033,6 +2113,7 @@ export function buildSkinMenuScript({
 
   root.append(button, panel);
   document.body.appendChild(root);
+  syncThemeMenuAnchor();
   const restore = () => {
     if (data.activeId === null) clearTheme(true, false);
     else setTheme(data.activeId, true, false);
@@ -2042,7 +2123,7 @@ export function buildSkinMenuScript({
 
   statusSnapshot = () => {
     assertCurrent();
-    const themeId = document.documentElement.dataset.heigeCodexSkin ?? null;
+    const themeId = document.documentElement.dataset.codexThemesSkin ?? null;
     const persistence = getPersistenceState();
     return {
       generation,
@@ -2054,7 +2135,7 @@ export function buildSkinMenuScript({
       controlRequest: controlRequest === null ? null : { ...controlRequest },
     };
   };
-  window.__heigeCodexSkin = { generation, setTheme, clearTheme, setHidden, getPersistenceState };
+  window.__codexThemesSkin = { generation, setTheme, clearTheme, setHidden, getPersistenceState };
   return true;
 })()`;
 }

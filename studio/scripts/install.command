@@ -2,10 +2,11 @@
 set -euo pipefail
 
 SOURCE="${0:A:h:h}"
-TARGET="$HOME/.codex/heige-codex-skin-studio"
+TARGET="$HOME/.codex/codex-themes"
+PORT="${CODEX_THEMES_PORT:-9341}"
 
 fail() {
-  print -u2 -- "HeiGe Codex Skin Studio：$1"
+  print -u2 -- "Codex Themes：$1"
   exit "${2:-1}"
 }
 
@@ -67,13 +68,13 @@ node_from_app() {
   return 1
 }
 
-if (( ${+HEIGE_NODE} )); then
-  [[ -n "$HEIGE_NODE" ]] || fail "HEIGE_NODE 不能为空" 127
-  probe_node "$HEIGE_NODE" "HEIGE_NODE"
+if (( ${+CODEX_THEMES_NODE} )); then
+  [[ -n "$CODEX_THEMES_NODE" ]] || fail "CODEX_THEMES_NODE 不能为空" 127
+  probe_node "$CODEX_THEMES_NODE" "CODEX_THEMES_NODE"
   NODE="$REPLY"
-elif (( ${+HEIGE_CODEX_APP} )); then
-  [[ -n "$HEIGE_CODEX_APP" ]] || fail "HEIGE_CODEX_APP 不能为空" 127
-  node_from_app "$HEIGE_CODEX_APP" "HEIGE_CODEX_APP" || fail "$NODE_ERROR" 127
+elif (( ${+CODEX_THEMES_APP} )); then
+  [[ -n "$CODEX_THEMES_APP" ]] || fail "CODEX_THEMES_APP 不能为空" 127
+  node_from_app "$CODEX_THEMES_APP" "CODEX_THEMES_APP" || fail "$NODE_ERROR" 127
   NODE="$REPLY"
 else
   NODE=""
@@ -102,7 +103,7 @@ else
     --target "$TARGET"
 fi
 
-echo "HeiGe Codex Skin Studio 已安装到：$TARGET"
-if [[ "${HEIGE_SKIP_APPLY:-0}" != "1" ]]; then
-  open "$TARGET/scripts/apply.command"
+echo "Codex Themes 已安装到：$TARGET"
+if [[ "${CODEX_THEMES_SKIP_APPLY:-0}" != "1" ]]; then
+  "$TARGET/scripts/lib/run-cli.zsh" apply --theme xp-qq --port "$PORT"
 fi

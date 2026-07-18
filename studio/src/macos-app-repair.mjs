@@ -18,7 +18,7 @@ import { promisify } from "node:util";
 import { withOperationLock } from "./operation-lock.mjs";
 
 const execFile = promisify(execFileCallback);
-const PRODUCT = "heige-codex-skin-studio";
+const PRODUCT = "codex-themes";
 const OPERATION = "repair-polluted-codex-app";
 const TEAM_IDENTIFIER = "2DC432GLL2";
 const BUNDLE_IDENTIFIER = "com.openai.codex";
@@ -136,7 +136,7 @@ function validateJournal(value, journalPath) {
     dirname(value.currentAppPath) !== dirname(value.backupAppPath) ||
     value.backupAppPath !== join(
       dirname(value.currentAppPath),
-      `.ChatGPT.app.heige-polluted-backup-${value.transactionId}`,
+      `.ChatGPT.app.codex-themes-polluted-backup-${value.transactionId}`,
     ) ||
     basename(journalPath) !== JOURNAL_NAME
   ) throw new Error("macOS app repair paths are not transaction-derived");
@@ -407,12 +407,12 @@ async function validatedPaths({ currentAppPath, stagedAppPath, journalPath, test
       userInfo().homedir,
       "Library",
       "Application Support",
-      "HeiGeCodexSkinStudio",
+      "CodexThemes",
       JOURNAL_NAME,
     );
     if (
       currentAppPath !== "/Applications/ChatGPT.app" ||
-      !/^\.ChatGPT\.app\.heige-official-stage-[A-Za-z0-9._-]+$/.test(basename(stagedAppPath)) ||
+      !/^\.ChatGPT\.app\.codex-themes-official-stage-[A-Za-z0-9._-]+$/.test(basename(stagedAppPath)) ||
       journalPath !== expectedJournal
     ) throw new Error("production app repair paths are outside the fixed allowlist");
   }
@@ -506,7 +506,7 @@ async function prepareUnderLock(input, dependencies) {
     stagedAppPath,
     backupAppPath: join(
       dirname(currentAppPath),
-      `.ChatGPT.app.heige-polluted-backup-${transactionId}`,
+      `.ChatGPT.app.codex-themes-polluted-backup-${transactionId}`,
     ),
     before,
     after,

@@ -591,7 +591,7 @@ export async function productionMacosInstallDependencies({
         ...input,
         statePath,
         lease,
-        legacyThemePath: join(home, ".codex", "heige-codex-skin-persist", "theme"),
+        legacyThemePath: join(home, ".codex", "codex-themes-skin-persist", "theme"),
         themeExists: fullyValidatedThemeExists,
       }),
     ),
@@ -657,7 +657,7 @@ export async function productionMacosInstallDependencies({
       ], {
         env: {
           ...process.env,
-          HEIGE_MACOS_INSTALL_AUTHORIZATION: JSON.stringify({
+          CODEX_THEMES_MACOS_INSTALL_AUTHORIZATION: JSON.stringify({
             role: "macos-install-ready-foreground",
             transactionId: outerTransaction.transactionId,
             journalPath: outerTransaction.journalPath,
@@ -762,7 +762,7 @@ if (isMainEntry()) {
   run(input)
     .then((result) => process.stdout.write(`${JSON.stringify(result)}\n`))
     .catch((error) => {
-      process.stderr.write(`HeiGe Codex Skin Studio：${error.message}\n`);
+      process.stderr.write(`Codex Themes：${error.message}\n`);
       process.exitCode = 1;
     });
 }

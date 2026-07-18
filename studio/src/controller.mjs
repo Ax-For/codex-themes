@@ -311,7 +311,7 @@ function normalizedDependencies(input) {
     newTransitionNonce: input.newTransitionNonce ?? randomUUID,
     fault: input.fault ?? (async () => {}),
     logger: input.logger ?? noopLogger(),
-    launcherName: input.launcherName ?? "HeiGe 皮肤启动器",
+    launcherName: input.launcherName ?? "Codex 主题启动器",
     controlPort: input.controlPort ?? 0,
   });
 }

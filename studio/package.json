@@ -1,5 +1,5 @@
 {
-  "name": "heige-codex-skin-studio",
+  "name": "codex-themes",
   "version": "1.0.0",
   "private": false,
   "description": "Windows XP-era QQ theme for Codex Desktop with a native-theme fallback.",
@@ -9,7 +9,7 @@
     "node": ">=22"
   },
   "bin": {
-    "heige-codex-skin": "src/cli.mjs"
+    "codex-themes": "src/cli.mjs"
   },
   "scripts": {
     "test": "node --test",

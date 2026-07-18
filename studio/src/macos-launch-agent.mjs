@@ -10,8 +10,8 @@ import { readProcessIdentity, sameProcessIdentity } from "./process-identity.mjs
 
 const execFileAsync = promisify(execFileCallback);
 
-export const CONTROLLER_LAUNCH_AGENT_LABEL = "com.heige.codex-skin-controller";
-export const LEGACY_WATCHDOG_LABEL = "com.heige.codex-skin-watchdog";
+export const CONTROLLER_LAUNCH_AGENT_LABEL = "com.codex-themes.skin-controller";
+export const LEGACY_WATCHDOG_LABEL = "com.codex-themes.skin-watchdog";
 
 const TEST_LABEL_PREFIX = `${CONTROLLER_LAUNCH_AGENT_LABEL}.test.`;
 const LEGACY_TEST_LABEL_PREFIX = `${LEGACY_WATCHDOG_LABEL}.test.`;
@@ -73,8 +73,8 @@ import { promisify } from "node:util";
 const execFile = promisify(execFileCallback);
 const [target, expectedPidText, helperTarget, plistPath, readyPath, readyNonce] = process.argv.slice(1);
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
-const targetMatch = new RegExp("^gui/(\\d+)/(com\\.heige\\.codex-skin-controller(?:\\.test\\." + uuid + ")?)$").exec(target ?? "");
-const helperMatch = new RegExp("^gui/(\\d+)/com\\.heige\\.codex-skin-controller\\.unregister\\." + uuid + "$").exec(helperTarget ?? "");
+const targetMatch = new RegExp("^gui/(\\d+)/(com\\.codex-themes\\.skin-controller(?:\\.test\\." + uuid + ")?)$").exec(target ?? "");
+const helperMatch = new RegExp("^gui/(\\d+)/com\\.codex-themes\\.skin-controller\\.unregister\\." + uuid + "$").exec(helperTarget ?? "");
 const expectedPid = Number(expectedPidText);
 if (
   targetMatch === null ||
@@ -253,12 +253,12 @@ function assertProductionLocations(options) {
     options.home,
     "Library",
     "Application Support",
-    "HeiGeCodexSkinStudio",
+    "CodexThemes",
   );
   const canonicalInstallRoot = join(
     options.home,
     ".codex",
-    "heige-codex-skin-studio",
+    "codex-themes",
   );
   if (
     resolve(options.launchAgentsDir) !== resolve(canonicalLaunchAgentsDir) ||
@@ -412,7 +412,7 @@ process.stdout.write(JSON.stringify({
   release: process.release?.name,
   controllerPath,
 }));`,
-      "heige-runtime-health-probe",
+      "codex-themes-runtime-health-probe",
       realController,
       nonce,
     ]);
@@ -550,7 +550,7 @@ export async function inspectTrustedProductionRuntime() {
   const home = trustedUserHome();
   return resolveStableRuntime({
     home,
-    stableInstallRoot: join(home, ".codex", "heige-codex-skin-studio"),
+    stableInstallRoot: join(home, ".codex", "codex-themes"),
     testMode: false,
     runtimePathsExplicit: false,
     fs: nodeFs,
@@ -600,13 +600,13 @@ function normalizedOptions(options = {}) {
     home,
     "Library",
     "Application Support",
-    "HeiGeCodexSkinStudio",
-  )) : join(home, "Library", "Application Support", "HeiGeCodexSkinStudio");
+    "CodexThemes",
+  )) : join(home, "Library", "Application Support", "CodexThemes");
   const stableInstallRoot = testMode ? (options.stableInstallRoot ?? join(
     home,
     ".codex",
-    "heige-codex-skin-studio",
-  )) : join(home, ".codex", "heige-codex-skin-studio");
+    "codex-themes",
+  )) : join(home, ".codex", "codex-themes");
   const controllerPath = options.controllerPath;
   const nodePath = options.nodePath;
   assertAbsolutePath(home, "home");
@@ -1326,7 +1326,7 @@ async function detachSnapshotPath(fs, path, expected, code = "FILE_CAPABILITY_CO
     if (current !== null) throw capabilityConflict(path, undefined, code);
     return null;
   }
-  const detachedPath = join(dirname(path), `.heige-detached.${randomUUID()}`);
+  const detachedPath = join(dirname(path), `.codex-themes-detached.${randomUUID()}`);
   try {
     await fs.rename(path, detachedPath);
   } catch (cause) {
@@ -1356,7 +1356,7 @@ async function deleteDetachedPath(fs, detached, code = "FILE_CAPABILITY_CONFLICT
   await assertSnapshotCurrent(fs, detached.path, detached.snapshot).catch((cause) => {
     throw capabilityConflict(detached.path, cause, code);
   });
-  const removalPath = join(dirname(detached.path), `.heige-removing.${randomUUID()}`);
+  const removalPath = join(dirname(detached.path), `.codex-themes-removing.${randomUUID()}`);
   try {
     await fs.rename(detached.path, removalPath);
   } catch (cause) {
@@ -2543,8 +2543,8 @@ async function assertLegacyAttribution(options, oldPlistPath, plist, oldLabel) {
     plist.ProgramArguments.length !== 2 ||
     plist.ProgramArguments[0] !== "/bin/zsh" ||
     !(
-      plist.EnvironmentVariables?.HEIGE_CODEX_SKIN_PORT === "9341" ||
-      plist.EnvironmentVariables?.HEIGE_CODEX_SKIN_PORT === 9341
+      plist.EnvironmentVariables?.CODEX_THEMES_PORT === "9341" ||
+      plist.EnvironmentVariables?.CODEX_THEMES_PORT === 9341
     )
   ) {
     throw new Error("legacy attribution failed: fixed feature tuple mismatch");

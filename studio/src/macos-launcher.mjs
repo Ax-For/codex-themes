@@ -19,15 +19,15 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 
 import { readProcessIdentity, sameProcessIdentity } from "./process-identity.mjs";
 
-export const MACOS_LAUNCHER_NAME = "HeiGe 皮肤启动器";
-export const MACOS_LAUNCHER_BUNDLE_ID = "com.heige.codex-skin-launcher";
+export const MACOS_LAUNCHER_NAME = "Codex 主题启动器";
+export const MACOS_LAUNCHER_BUNDLE_ID = "com.codex-themes.skin-launcher";
 export const MACOS_LAUNCHER_SCHEMA_VERSION = 2;
-const EXECUTABLE_NAME = "HeiGe Skin Launcher";
-const GENERATOR_ID = "heige-codex-skin-studio";
+const EXECUTABLE_NAME = "Codex Theme Launcher";
+const GENERATOR_ID = "codex-themes";
 const MAX_GENERATED_FILE_BYTES = 64 * 1024;
-const TRANSACTION_FILE = ".heige-codex-skin-launcher-transaction.json";
-const PREPARATION_FILE = ".heige-codex-skin-launcher-prepare.json";
-const LOCK_DIRECTORY = ".heige-codex-skin-launcher-install.lock";
+const TRANSACTION_FILE = ".codex-themes-skin-launcher-transaction.json";
+const PREPARATION_FILE = ".codex-themes-skin-launcher-prepare.json";
+const LOCK_DIRECTORY = ".codex-themes-skin-launcher-install.lock";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PARTICIPANT_KEYS = [
   "afterExecutableSha256",
@@ -59,10 +59,10 @@ const PLIST_KEYS = [
   "CFBundlePackageType",
   "CFBundleShortVersionString",
   "CFBundleVersion",
-  "HeiGeGeneratedBy",
-  "HeiGeGeneratedLauncher",
-  "HeiGeInstallRoot",
-  "HeiGeLauncherSchemaVersion",
+  "CodexThemesGeneratedBy",
+  "CodexThemesGeneratedLauncher",
+  "CodexThemesInstallRoot",
+  "CodexThemesLauncherSchemaVersion",
 ].sort();
 
 function exactKeys(value, keys) {
@@ -145,7 +145,7 @@ function shellQuote(value) {
 
 function renderMacosLauncherExecutableVersion(entrypoint, schema) {
   entrypoint = assertAbsolutePath(entrypoint, "launcher entrypoint");
-  return `#!/bin/zsh\n# HeiGe generated launcher schema ${schema}\nset -euo pipefail\nexec ${shellQuote(entrypoint)}\n`;
+  return `#!/bin/zsh\n# CodexThemes generated launcher schema ${schema}\nset -euo pipefail\nexec ${shellQuote(entrypoint)}\n`;
 }
 
 export function renderMacosLauncherExecutable(entrypoint) {
@@ -176,13 +176,13 @@ export function renderMacosLauncherPlist(installRoot) {
     <string>1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>HeiGeGeneratedBy</key>
+    <key>CodexThemesGeneratedBy</key>
     <string>${GENERATOR_ID}</string>
-    <key>HeiGeGeneratedLauncher</key>
+    <key>CodexThemesGeneratedLauncher</key>
     <true/>
-    <key>HeiGeInstallRoot</key>
+    <key>CodexThemesInstallRoot</key>
     <string>${xmlEscape(installRoot)}</string>
-    <key>HeiGeLauncherSchemaVersion</key>
+    <key>CodexThemesLauncherSchemaVersion</key>
     <integer>${MACOS_LAUNCHER_SCHEMA_VERSION}</integer>
 </dict>
 </plist>
@@ -271,13 +271,13 @@ function parseAttributedPlist(text) {
   if (keys.length !== PLIST_KEYS.length || !keys.every((key, index) => key === PLIST_KEYS[index])) {
     throw new Error("Info.plist keys 不符合 generated launcher schema");
   }
-  if (!/<key>HeiGeGeneratedLauncher<\/key>\s*<true\/>/.test(text)) {
+  if (!/<key>CodexThemesGeneratedLauncher<\/key>\s*<true\/>/.test(text)) {
     throw new Error("Info.plist 缺少 generated launcher 标识");
   }
   const schema = Number(oneMatch(
     text,
-    /<key>HeiGeLauncherSchemaVersion<\/key>\s*<integer>(\d+)<\/integer>/g,
-    "HeiGeLauncherSchemaVersion",
+    /<key>CodexThemesLauncherSchemaVersion<\/key>\s*<integer>(\d+)<\/integer>/g,
+    "CodexThemesLauncherSchemaVersion",
   ));
   if (![1, MACOS_LAUNCHER_SCHEMA_VERSION].includes(schema)) {
     throw new Error("不支持的 generated launcher schema");
@@ -288,10 +288,10 @@ function parseAttributedPlist(text) {
   if (plistString(text, "CFBundleExecutable") !== EXECUTABLE_NAME) {
     throw new Error("generated launcher executable 不匹配");
   }
-  if (plistString(text, "HeiGeGeneratedBy") !== GENERATOR_ID) {
+  if (plistString(text, "CodexThemesGeneratedBy") !== GENERATOR_ID) {
     throw new Error("generated launcher producer 不匹配");
   }
-  const installRoot = assertAbsolutePath(plistString(text, "HeiGeInstallRoot"), "attributed installRoot");
+  const installRoot = assertAbsolutePath(plistString(text, "CodexThemesInstallRoot"), "attributed installRoot");
   return { installRoot, schema };
 }
 
@@ -803,7 +803,7 @@ async function acquireInstallLock(applications, identityReader = readProcessIden
         (schema1 && observedIdentity !== null) ||
         (schema2 && sameProcessIdentity(observedIdentity, owner))
       ) {
-        throw new Error("另一个 HeiGe 皮肤启动器安装仍在进行");
+        throw new Error("另一个 Codex 主题启动器安装仍在进行");
       }
       const stale = `${lockPath}.stale.${randomUUID()}`;
       try { await rename(lockPath, stale); } catch (failure) {
@@ -814,7 +814,7 @@ async function acquireInstallLock(applications, identityReader = readProcessIden
       await syncDirectory(applications);
     } catch (cause) {
       if (cause?.code === "ENOENT") continue;
-      if (cause?.message === "另一个 HeiGe 皮肤启动器安装仍在进行") throw cause;
+      if (cause?.message === "另一个 Codex 主题启动器安装仍在进行") throw cause;
       throw new Error("launcher install lock 无法归属，拒绝抢占", { cause });
     }
   }

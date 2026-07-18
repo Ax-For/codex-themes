@@ -1,12 +1,12 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export const PRODUCT_ID = "heige-codex-skin-studio";
-export const PRODUCT_NAME = "HeiGe Codex Skin Studio";
+export const PRODUCT_ID = "codex-themes";
+export const PRODUCT_NAME = "Codex Themes";
 export const STATE_SCHEMA_VERSION = 2;
 export const THEME_SCHEMA_VERSION = 1;
 export const DEFAULT_THEME_ID = "xp-qq";
-export const NATIVE_THEME_ID = "__heige_native__";
+export const NATIVE_THEME_ID = "__codex_themes_native__";
 export const DEFAULT_CDP_PORT = 9341;
 export const CODEX_RENDERER_ORIGIN = "app://-";
 export const EXPECTED_BUNDLE_ID = "com.openai.codex";
@@ -23,8 +23,8 @@ export function resolveStudioPaths({
   const installRoot = join(home, ".codex", PRODUCT_ID);
   const stateRoot =
     platform === "win32"
-      ? join(env.APPDATA ?? join(home, "AppData", "Roaming"), "HeiGeCodexSkinStudio")
-      : join(home, "Library", "Application Support", "HeiGeCodexSkinStudio");
+      ? join(env.APPDATA ?? join(home, "AppData", "Roaming"), "CodexThemes")
+      : join(home, "Library", "Application Support", "CodexThemes");
 
   return {
     installRoot,

@@ -1,11 +1,11 @@
-﻿# HeiGe Codex Skin Studio Windows entrypoint orchestration
+﻿# Codex Themes Windows entrypoint orchestration
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "common.ps1")
 . (Join-Path $PSScriptRoot "scheduled-task.ps1")
 
-function New-HeiGeWindowsEntrypointContext {
+function New-CodexThemesWindowsEntrypointContext {
     param([Parameter(Mandatory = $true)][string]$Root)
-    $resolvedRoot = Get-HeiGeComparablePath -Path $Root
+    $resolvedRoot = Get-CodexThemesComparablePath -Path $Root
     if (-not (Test-Path -LiteralPath $resolvedRoot -PathType Container)) {
         throw "安装目录不存在：$resolvedRoot"
     }
@@ -26,19 +26,19 @@ function New-HeiGeWindowsEntrypointContext {
     if (-not $runtime -or -not $runtime.Path -or -not (Test-Path -LiteralPath $runtime.Path -PathType Leaf)) {
         throw "Windows 入口无法验证 Node.js 运行时。"
     }
-    $stateDirectory = Resolve-HeiGeScopedStateDirectory -StateDirectory $null
-    Protect-HeiGeStateDirectory -Path $stateDirectory | Out-Null
+    $stateDirectory = Resolve-CodexThemesScopedStateDirectory -StateDirectory $null
+    Protect-CodexThemesStateDirectory -Path $stateDirectory | Out-Null
     return [pscustomobject][ordered]@{
         App = $app
         NodePath = [string]$runtime.Path
         CliPath = $cliPath
         ControllerPath = $controllerPath
         StateDirectory = $stateDirectory
-        TaskName = $script:HeiGeProductionTaskName
+        TaskName = $script:CodexThemesProductionTaskName
     }
 }
 
-function Get-HeiGeFlowContext {
+function Get-CodexThemesFlowContext {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [scriptblock]$ContextProvider
@@ -47,7 +47,7 @@ function Get-HeiGeFlowContext {
         if ($ContextProvider) {
             & $ContextProvider $Root
         } else {
-            New-HeiGeWindowsEntrypointContext -Root $Root
+            New-CodexThemesWindowsEntrypointContext -Root $Root
         }
     )
     if ($values.Count -ne 1 -or $null -eq $values[0]) {
@@ -62,14 +62,14 @@ function Get-HeiGeFlowContext {
     return $context
 }
 
-function Invoke-HeiGeContextCli {
+function Invoke-CodexThemesContextCli {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [Parameter(Mandatory = $true)][string[]]$Arguments,
         [scriptblock]$CliProvider
     )
-    $identityToken = ConvertTo-HeiGeCodexAppIdentityToken -App $Context.App
-    $environmentName = "HEIGE_WINDOWS_APP_IDENTITY"
+    $identityToken = ConvertTo-CodexThemesCodexAppIdentityToken -App $Context.App
+    $environmentName = "CODEX_THEMES_WINDOWS_APP_IDENTITY"
     $previousIdentity = [System.Environment]::GetEnvironmentVariable(
         $environmentName,
         [System.EnvironmentVariableTarget]::Process
@@ -106,7 +106,7 @@ function Invoke-HeiGeContextCli {
     return $values[0]
 }
 
-function Assert-HeiGeModeResult {
+function Assert-CodexThemesModeResult {
     param(
         [Parameter(Mandatory = $true)]$Result,
         [Parameter(Mandatory = $true)][string]$Expected
@@ -116,7 +116,7 @@ function Assert-HeiGeModeResult {
     }
 }
 
-function Assert-HeiGePersistenceResult {
+function Assert-CodexThemesPersistenceResult {
     param(
         [Parameter(Mandatory = $true)]$Result,
         [Parameter(Mandatory = $true)][bool]$Expected
@@ -128,7 +128,7 @@ function Assert-HeiGePersistenceResult {
     }
 }
 
-function Start-HeiGeEntrypointCdp {
+function Start-CodexThemesEntrypointCdp {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [Parameter(Mandatory = $true)][int]$Port,
@@ -141,7 +141,7 @@ function Start-HeiGeEntrypointCdp {
     }
 }
 
-function Require-HeiGeEntrypointCdp {
+function Require-CodexThemesEntrypointCdp {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [Parameter(Mandatory = $true)][int]$Port,
@@ -157,7 +157,7 @@ function Require-HeiGeEntrypointCdp {
     Get-CdpOwner -Port $Port -App $Context.App | Out-Null
 }
 
-function Unregister-HeiGeEntrypointTask {
+function Unregister-CodexThemesEntrypointTask {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [scriptblock]$UnregisterProvider
@@ -166,7 +166,7 @@ function Unregister-HeiGeEntrypointTask {
         if ($UnregisterProvider) {
             & $UnregisterProvider $Context
         } else {
-            Unregister-HeiGeScheduledTask -TaskName ([string]$Context.TaskName) `
+            Unregister-CodexThemesScheduledTask -TaskName ([string]$Context.TaskName) `
                 -StateDirectory ([string]$Context.StateDirectory)
         }
     )
@@ -179,7 +179,7 @@ function Unregister-HeiGeEntrypointTask {
     return $values[0]
 }
 
-function Get-HeiGeEntrypointProcessMode {
+function Get-CodexThemesEntrypointProcessMode {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [scriptblock]$ProcessProvider
@@ -242,7 +242,7 @@ function Get-HeiGeEntrypointProcessMode {
             $owned += [pscustomobject][ordered]@{
                 Id = $processId
                 ParentProcessId = $parentProcessId
-                Path = Get-HeiGeFullPath -Path $path
+                Path = Get-CodexThemesFullPath -Path $path
             }
         } else {
             throw "Codex 候选进程不属于已绑定的不可变应用身份。"
@@ -289,7 +289,7 @@ function Get-HeiGeEntrypointProcessMode {
     return "native"
 }
 
-function Restore-HeiGeApplyPrestate {
+function Restore-CodexThemesApplyPrestate {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [Parameter(Mandatory = $true)][int]$Port,
@@ -314,7 +314,7 @@ function Restore-HeiGeApplyPrestate {
     return [pscustomobject][ordered]@{ Restored = $true; Mode = $Mode }
 }
 
-function Invoke-HeiGeApplyCompensation {
+function Invoke-CodexThemesApplyCompensation {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [Parameter(Mandatory = $true)][int]$Port,
@@ -325,7 +325,7 @@ function Invoke-HeiGeApplyCompensation {
         if ($CompensateProvider) {
             & $CompensateProvider $Context $Port $Mode
         } else {
-            Restore-HeiGeApplyPrestate -Context $Context -Port $Port -Mode $Mode
+            Restore-CodexThemesApplyPrestate -Context $Context -Port $Port -Mode $Mode
         }
     )
     if ($values.Count -ne 1 -or $null -eq $values[0] -or
@@ -339,7 +339,7 @@ function Invoke-HeiGeApplyCompensation {
     return $values[0]
 }
 
-function Invoke-HeiGeApplyWithContext {
+function Invoke-CodexThemesApplyWithContext {
     param(
         [Parameter(Mandatory = $true)]$Context,
         [AllowNull()][string]$Theme,
@@ -358,9 +358,9 @@ function Invoke-HeiGeApplyWithContext {
     $prestate = if ($hasExactCdp) {
         "cdp"
     } else {
-        Get-HeiGeEntrypointProcessMode -Context $Context -ProcessProvider $ProcessProvider
+        Get-CodexThemesEntrypointProcessMode -Context $Context -ProcessProvider $ProcessProvider
     }
-    Start-HeiGeEntrypointCdp -Context $Context -Port $Port -StartCdpProvider $StartCdpProvider
+    Start-CodexThemesEntrypointCdp -Context $Context -Port $Port -StartCdpProvider $StartCdpProvider
     $arguments = @("apply")
     if ([string]::IsNullOrWhiteSpace($Theme)) {
         $arguments += "--prefer-stored"
@@ -369,15 +369,15 @@ function Invoke-HeiGeApplyWithContext {
     }
     $arguments += @("--port", [string]$Port)
     try {
-        $result = Invoke-HeiGeContextCli -Context $Context `
+        $result = Invoke-CodexThemesContextCli -Context $Context `
             -Arguments $arguments -CliProvider $CliProvider
-        Assert-HeiGeModeResult -Result $result -Expected "active"
+        Assert-CodexThemesModeResult -Result $result -Expected "active"
         return $result
     } catch {
         $applyError = $_.Exception
         if ($prestate -ceq "cdp") { throw $applyError }
         try {
-            Invoke-HeiGeApplyCompensation -Context $Context -Port $Port -Mode $prestate `
+            Invoke-CodexThemesApplyCompensation -Context $Context -Port $Port -Mode $prestate `
                 -CompensateProvider $CompensateProvider | Out-Null
         } catch {
             throw "皮肤应用失败且未能恢复启动前状态。原始错误：$($applyError.Message)；补偿错误：$($_.Exception.Message)"
@@ -386,7 +386,7 @@ function Invoke-HeiGeApplyWithContext {
     }
 }
 
-function Invoke-HeiGeApplyFlow {
+function Invoke-CodexThemesApplyFlow {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [AllowNull()][string]$Theme,
@@ -401,8 +401,8 @@ function Invoke-HeiGeApplyFlow {
     if ($PSBoundParameters.ContainsKey("Theme") -and [string]::IsNullOrWhiteSpace($Theme)) {
         throw "Theme 显式传入时不能为空。"
     }
-    $context = Get-HeiGeFlowContext -Root $Root -ContextProvider $ContextProvider
-    $applied = Invoke-HeiGeApplyWithContext -Context $context -Theme $Theme -Port $Port `
+    $context = Get-CodexThemesFlowContext -Root $Root -ContextProvider $ContextProvider
+    $applied = Invoke-CodexThemesApplyWithContext -Context $context -Theme $Theme -Port $Port `
         -StartCdpProvider $StartCdpProvider -CliProvider $CliProvider `
         -CdpStatusProvider $CdpStatusProvider -ProcessProvider $ProcessProvider `
         -CompensateProvider $CompensateProvider
@@ -424,7 +424,7 @@ function Invoke-HeiGeApplyFlow {
     }
 }
 
-function Invoke-HeiGeEnableSkinFlow {
+function Invoke-CodexThemesEnableSkinFlow {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [AllowNull()][string]$Theme,
@@ -450,10 +450,10 @@ function Invoke-HeiGeEnableSkinFlow {
         CompensateProvider = $CompensateProvider
     }
     if ($PSBoundParameters.ContainsKey("Theme")) { $arguments.Theme = $Theme }
-    return Invoke-HeiGeApplyFlow @arguments
+    return Invoke-CodexThemesApplyFlow @arguments
 }
 
-function Invoke-HeiGePauseFlow {
+function Invoke-CodexThemesPauseFlow {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [ValidateRange(1024, 65535)][int]$Port = 9341,
@@ -461,7 +461,7 @@ function Invoke-HeiGePauseFlow {
         [scriptblock]$CdpStatusProvider,
         [scriptblock]$CliProvider
     )
-    $context = Get-HeiGeFlowContext -Root $Root -ContextProvider $ContextProvider
+    $context = Get-CodexThemesFlowContext -Root $Root -ContextProvider $ContextProvider
     $hasCdp = if ($CdpStatusProvider) {
         [bool](& $CdpStatusProvider $context $Port)
     } else {
@@ -474,9 +474,9 @@ function Invoke-HeiGePauseFlow {
             Completion = "complete"
         }
     }
-    $result = Invoke-HeiGeContextCli -Context $context `
+    $result = Invoke-CodexThemesContextCli -Context $context `
         -Arguments @("pause", "--port", [string]$Port) -CliProvider $CliProvider
-    Assert-HeiGeModeResult -Result $result -Expected "paused"
+    Assert-CodexThemesModeResult -Result $result -Expected "paused"
     return [pscustomobject][ordered]@{
         Mode = "paused"
         PersistenceEnabled = if ($result.PSObject.Properties.Name -contains "persistenceEnabled") {
@@ -486,7 +486,7 @@ function Invoke-HeiGePauseFlow {
     }
 }
 
-function Invoke-HeiGeResumeFlow {
+function Invoke-CodexThemesResumeFlow {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [ValidateRange(1024, 65535)][int]$Port = 9341,
@@ -494,11 +494,11 @@ function Invoke-HeiGeResumeFlow {
         [scriptblock]$RequireCdpProvider,
         [scriptblock]$CliProvider
     )
-    $context = Get-HeiGeFlowContext -Root $Root -ContextProvider $ContextProvider
-    Require-HeiGeEntrypointCdp -Context $context -Port $Port -RequireCdpProvider $RequireCdpProvider
-    $result = Invoke-HeiGeContextCli -Context $context `
+    $context = Get-CodexThemesFlowContext -Root $Root -ContextProvider $ContextProvider
+    Require-CodexThemesEntrypointCdp -Context $context -Port $Port -RequireCdpProvider $RequireCdpProvider
+    $result = Invoke-CodexThemesContextCli -Context $context `
         -Arguments @("resume", "--port", [string]$Port) -CliProvider $CliProvider
-    Assert-HeiGeModeResult -Result $result -Expected "active"
+    Assert-CodexThemesModeResult -Result $result -Expected "active"
     return [pscustomobject][ordered]@{
         Mode = "active"
         PersistenceEnabled = if ($result.PSObject.Properties.Name -contains "persistenceEnabled") {
@@ -508,7 +508,7 @@ function Invoke-HeiGeResumeFlow {
     }
 }
 
-function Invoke-HeiGeRestoreFlow {
+function Invoke-CodexThemesRestoreFlow {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [ValidateRange(1024, 65535)][int]$Port = 9341,
@@ -519,34 +519,34 @@ function Invoke-HeiGeRestoreFlow {
         [scriptblock]$UnregisterProvider,
         [scriptblock]$RestartNativeProvider
     )
-    $context = Get-HeiGeFlowContext -Root $Root -ContextProvider $ContextProvider
+    $context = Get-CodexThemesFlowContext -Root $Root -ContextProvider $ContextProvider
     $hasExactCdp = if ($CdpStatusProvider) {
         [bool](& $CdpStatusProvider $context $Port)
     } else {
         Test-Cdp -Port $Port -App $context.App
     }
     if (-not $hasExactCdp) {
-        Get-HeiGeEntrypointProcessMode -Context $context `
+        Get-CodexThemesEntrypointProcessMode -Context $context `
             -ProcessProvider $ProcessProvider | Out-Null
     }
-    $disabled = Invoke-HeiGeContextCli -Context $context `
+    $disabled = Invoke-CodexThemesContextCli -Context $context `
         -Arguments @("set-persistence", "false", "--port", [string]$Port) -CliProvider $CliProvider
-    Assert-HeiGePersistenceResult -Result $disabled -Expected $false
+    Assert-CodexThemesPersistenceResult -Result $disabled -Expected $false
     $hasExactCdp = if ($CdpStatusProvider) {
         [bool](& $CdpStatusProvider $context $Port)
     } else {
         Test-Cdp -Port $Port -App $context.App
     }
     if ($hasExactCdp) {
-        $paused = Invoke-HeiGeContextCli -Context $context `
+        $paused = Invoke-CodexThemesContextCli -Context $context `
             -Arguments @("pause", "--port", [string]$Port) -CliProvider $CliProvider
-        Assert-HeiGeModeResult -Result $paused -Expected "paused"
+        Assert-CodexThemesModeResult -Result $paused -Expected "paused"
     }
-    Unregister-HeiGeEntrypointTask -Context $context -UnregisterProvider $UnregisterProvider | Out-Null
+    Unregister-CodexThemesEntrypointTask -Context $context -UnregisterProvider $UnregisterProvider | Out-Null
     $offlineMode = if ($hasExactCdp) {
         $null
     } else {
-        Get-HeiGeEntrypointProcessMode -Context $context -ProcessProvider $ProcessProvider
+        Get-CodexThemesEntrypointProcessMode -Context $context -ProcessProvider $ProcessProvider
     }
     if ($hasExactCdp) {
         if ($RestartNativeProvider) {

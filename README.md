@@ -18,6 +18,7 @@
 - 点击左上角头像选择本地 PNG、JPEG 或 WebP 图片。
 - 头像自动居中裁切为 128 × 128 WebP，仅保存在当前机器的 Codex 本地存储中。
 - 可选择当前会话启用，或通过“皮肤常驻”在下次启动时继续启用。
+- 附带原创 QQ 风格 Codex 宠物“蓝扣”，包含 9 种工作状态动画。
 - 支持 macOS 与 Windows 的用户级安装和恢复入口。
 
 ## 安装
@@ -63,6 +64,19 @@ studio\scripts\windows\install.bat
 
 恢复原生只清除当前主题注入，不会删除你的 Codex 任务、项目或聊天记录。
 
+## QQ 宠物
+
+仓库内置原创企鹅伙伴“蓝扣”：冰蓝耳机、橙色围巾和浅蓝信使包呼应 XP · QQ 主题，但不使用 QQ 标志或官方角色素材。宠物包位于 `pets/lan-kou/`，覆盖待机、左右移动、挥手、跳跃、失败、等待输入、工作中和待审查等状态。
+
+安装到当前用户的 Codex 宠物目录：
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/pets"
+cp -R pets/lan-kou "${CODEX_HOME:-$HOME/.codex}/pets/lan-kou"
+```
+
+安装后重新打开 Codex，即可在宠物选择中使用“蓝扣”。逐帧总览和校验结果保存在 `pets/lan-kou/qa/`。
+
 ## 开发
 
 预览站点：
@@ -86,6 +100,7 @@ src/                    主题预览应用
 theme-package/xp-qq/    XP · QQ 主题素材与清单
 studio/                 可安装的 Codex 注入控制器
 studio/themes/xp-qq/    公开版唯一内置主题
+pets/lan-kou/           原创 QQ 风格 Codex 宠物与验收材料
 ```
 
 ## 安全与隐私

@@ -1,50 +1,50 @@
-﻿# HeiGe Codex Skin Studio Scheduled Task adapter (Windows current user only)
-$script:HeiGeProductionTaskName = "HeiGe Codex Skin Studio Controller"
-$script:HeiGeTestTaskPattern = '^HeiGe Codex Skin Studio Test [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+﻿# Codex Themes Scheduled Task adapter (Windows current user only)
+$script:CodexThemesProductionTaskName = "Codex Themes Controller"
+$script:CodexThemesTestTaskPattern = '^Codex Themes Test [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
 
-function Test-HeiGeTestTaskName {
+function Test-CodexThemesTestTaskName {
     param([Parameter(Mandatory = $true)][string]$TaskName)
-    return $TaskName -cmatch $script:HeiGeTestTaskPattern
+    return $TaskName -cmatch $script:CodexThemesTestTaskPattern
 }
 
-function Assert-HeiGeKnownTaskName {
+function Assert-CodexThemesKnownTaskName {
     param([Parameter(Mandatory = $true)][string]$TaskName)
-    if ($TaskName -ceq $script:HeiGeProductionTaskName) { return }
-    if (Test-HeiGeTestTaskName -TaskName $TaskName) { return }
+    if ($TaskName -ceq $script:CodexThemesProductionTaskName) { return }
+    if (Test-CodexThemesTestTaskName -TaskName $TaskName) { return }
     throw "Scheduled Task 名称必须是精确生产名或包含 GUID 的隔离测试名。"
 }
 
-function Assert-HeiGeTaskScope {
+function Assert-CodexThemesTaskScope {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [switch]$TestMode
     )
-    Assert-HeiGeKnownTaskName -TaskName $TaskName
+    Assert-CodexThemesKnownTaskName -TaskName $TaskName
     if ($TestMode) {
-        if ($TaskName -ceq $script:HeiGeProductionTaskName) {
+        if ($TaskName -ceq $script:CodexThemesProductionTaskName) {
             throw "test mode cannot address the production task"
         }
-        if (-not (Test-HeiGeTestTaskName -TaskName $TaskName)) {
+        if (-not (Test-CodexThemesTestTaskName -TaskName $TaskName)) {
             throw "test mode task name must contain an exact GUID"
         }
         return
     }
-    if ($TaskName -cne $script:HeiGeProductionTaskName) {
+    if ($TaskName -cne $script:CodexThemesProductionTaskName) {
         throw "production mode can address only the production task"
     }
 }
 
-function Get-HeiGeCurrentUserId {
+function Get-CodexThemesCurrentUserId {
     return [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 }
 
-function Get-HeiGeDefaultStateDirectory {
-    if ($env:APPDATA) { return (Join-Path $env:APPDATA "HeiGeCodexSkinStudio") }
-    if ($env:USERPROFILE) { return (Join-Path $env:USERPROFILE "AppData\Roaming\HeiGeCodexSkinStudio") }
+function Get-CodexThemesDefaultStateDirectory {
+    if ($env:APPDATA) { return (Join-Path $env:APPDATA "CodexThemes") }
+    if ($env:USERPROFILE) { return (Join-Path $env:USERPROFILE "AppData\Roaming\CodexThemes") }
     throw "无法解析当前用户的 Windows 状态目录。"
 }
 
-function Get-HeiGeComparablePath {
+function Get-CodexThemesComparablePath {
     param([Parameter(Mandatory = $true)][string]$Path)
     if (-not [System.IO.Path]::IsPathRooted($Path)) { throw "状态目录必须是绝对路径。" }
     $fullPath = [System.IO.Path]::GetFullPath($Path)
@@ -57,22 +57,22 @@ function Get-HeiGeComparablePath {
     return $fullPath.TrimEnd($separators)
 }
 
-function Resolve-HeiGeScopedStateDirectory {
+function Resolve-CodexThemesScopedStateDirectory {
     param(
         [AllowNull()][string]$StateDirectory,
         [switch]$TestMode
     )
-    $defaultDirectory = Get-HeiGeComparablePath -Path (Get-HeiGeDefaultStateDirectory)
+    $defaultDirectory = Get-CodexThemesComparablePath -Path (Get-CodexThemesDefaultStateDirectory)
     if ($TestMode) {
         if (-not $StateDirectory) { throw "test mode requires an isolated state directory" }
-        $resolved = Get-HeiGeComparablePath -Path $StateDirectory
+        $resolved = Get-CodexThemesComparablePath -Path $StateDirectory
         if ($resolved -ieq $defaultDirectory) {
             throw "test mode cannot use the production state directory"
         }
         return $resolved
     }
     if ($StateDirectory) {
-        $resolved = Get-HeiGeComparablePath -Path $StateDirectory
+        $resolved = Get-CodexThemesComparablePath -Path $StateDirectory
         if ($resolved -ine $defaultDirectory) {
             throw "production mode must use the default state directory"
         }
@@ -80,12 +80,12 @@ function Resolve-HeiGeScopedStateDirectory {
     return $defaultDirectory
 }
 
-function Get-HeiGeWindowsPowerShellPath {
+function Get-CodexThemesWindowsPowerShellPath {
     if (-not $env:SystemRoot) { throw "SystemRoot 不存在，无法定位 Windows PowerShell。" }
     return (Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe")
 }
 
-function ConvertTo-HeiGeQuotedArgument {
+function ConvertTo-CodexThemesQuotedArgument {
     param([Parameter(Mandatory = $true)][string]$Value)
     if ($Value.Contains('"') -or $Value.Contains("`r") -or $Value.Contains("`n")) {
         throw "Scheduled Task 参数包含不允许的引号或换行。"
@@ -93,34 +93,34 @@ function ConvertTo-HeiGeQuotedArgument {
     return '"' + $Value + '"'
 }
 
-function Assert-HeiGeAppIdentityToken {
+function Assert-CodexThemesAppIdentityToken {
     param([Parameter(Mandatory = $true)][string]$AppIdentityToken)
     try {
-        ConvertFrom-HeiGeCodexAppIdentityToken -IdentityToken $AppIdentityToken | Out-Null
+        ConvertFrom-CodexThemesCodexAppIdentityToken -IdentityToken $AppIdentityToken | Out-Null
     } catch {
         throw "Scheduled Task app identity token is invalid: $($_.Exception.Message)"
     }
 }
 
-function Get-HeiGeHandshakePath {
+function Get-CodexThemesHandshakePath {
     param(
         [Parameter(Mandatory = $true)][string]$StateDirectory,
         [Parameter(Mandatory = $true)][string]$TaskName
     )
-    Assert-HeiGeKnownTaskName -TaskName $TaskName
+    Assert-CodexThemesKnownTaskName -TaskName $TaskName
     return (Join-Path $StateDirectory "controller-handshake.json")
 }
 
-function Get-HeiGeStartRequestPath {
+function Get-CodexThemesStartRequestPath {
     param(
         [Parameter(Mandatory = $true)][string]$StateDirectory,
         [Parameter(Mandatory = $true)][string]$TaskName
     )
-    Assert-HeiGeKnownTaskName -TaskName $TaskName
+    Assert-CodexThemesKnownTaskName -TaskName $TaskName
     return (Join-Path $StateDirectory "controller-start-request.json")
 }
 
-function Test-HeiGeSafeStartRequestFile {
+function Test-CodexThemesSafeStartRequestFile {
     param([Parameter(Mandatory = $true)][string]$Path)
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
     $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
@@ -132,7 +132,7 @@ function Test-HeiGeSafeStartRequestFile {
     return $true
 }
 
-function Assert-HeiGeStartRequestParameters {
+function Assert-CodexThemesStartRequestParameters {
     param(
         [Nullable[long]]$Revision,
         [AllowNull()][string]$TransitionNonce
@@ -150,7 +150,7 @@ function Assert-HeiGeStartRequestParameters {
     }
 }
 
-function New-HeiGeTaskDefinition {
+function New-CodexThemesTaskDefinition {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [Parameter(Mandatory = $true)][string]$NodePath,
@@ -161,10 +161,10 @@ function New-HeiGeTaskDefinition {
         [string]$PowerShellPath,
         [ValidateRange(1024, 65535)][int]$Port = 9341
     )
-    Assert-HeiGeKnownTaskName -TaskName $TaskName
-    Assert-HeiGeAppIdentityToken -AppIdentityToken $AppIdentityToken
-    if (-not $CurrentUserId) { $CurrentUserId = Get-HeiGeCurrentUserId }
-    if (-not $PowerShellPath) { $PowerShellPath = Get-HeiGeWindowsPowerShellPath }
+    Assert-CodexThemesKnownTaskName -TaskName $TaskName
+    Assert-CodexThemesAppIdentityToken -AppIdentityToken $AppIdentityToken
+    if (-not $CurrentUserId) { $CurrentUserId = Get-CodexThemesCurrentUserId }
+    if (-not $PowerShellPath) { $PowerShellPath = Get-CodexThemesWindowsPowerShellPath }
     foreach ($entry in @(
         [pscustomobject]@{ Name = "NodePath"; Value = $NodePath; Kind = "Leaf" },
         [pscustomobject]@{ Name = "ControllerPath"; Value = $ControllerPath; Kind = "Leaf" },
@@ -183,17 +183,17 @@ function New-HeiGeTaskDefinition {
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        (ConvertTo-HeiGeQuotedArgument -Value $ControllerPath),
+        (ConvertTo-CodexThemesQuotedArgument -Value $ControllerPath),
         "-Action",
         "run",
         "-TaskName",
-        (ConvertTo-HeiGeQuotedArgument -Value $TaskName),
+        (ConvertTo-CodexThemesQuotedArgument -Value $TaskName),
         "-Port",
         [string]$Port,
         "-StateDirectory",
-        (ConvertTo-HeiGeQuotedArgument -Value $StateDirectory),
+        (ConvertTo-CodexThemesQuotedArgument -Value $StateDirectory),
         "-AppIdentityToken",
-        (ConvertTo-HeiGeQuotedArgument -Value $AppIdentityToken)
+        (ConvertTo-CodexThemesQuotedArgument -Value $AppIdentityToken)
     )
     $arguments = $argumentList -join " "
     return [pscustomobject][ordered]@{
@@ -224,7 +224,7 @@ function New-HeiGeTaskDefinition {
     }
 }
 
-function Register-DefaultHeiGeScheduledTask {
+function Register-DefaultCodexThemesScheduledTask {
     param([Parameter(Mandatory = $true)]$Definition)
     $action = New-ScheduledTaskAction -Execute $Definition.Action.Execute `
         -Argument $Definition.Action.Arguments -WorkingDirectory $Definition.Action.WorkingDirectory
@@ -234,11 +234,11 @@ function Register-DefaultHeiGeScheduledTask {
     $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
         -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero)
     $task = New-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -Settings $settings `
-        -Description "HeiGe Codex Skin Studio current-user controller"
+        -Description "Codex Themes current-user controller"
     Register-ScheduledTask -TaskPath "\" -TaskName $Definition.TaskName -InputObject $task -Force | Out-Null
 }
 
-function ConvertFrom-DefaultHeiGeScheduledTask {
+function ConvertFrom-DefaultCodexThemesScheduledTask {
     param([Parameter(Mandatory = $true)]$Task)
     $actions = @($Task.Actions)
     $triggers = @($Task.Triggers)
@@ -284,14 +284,14 @@ function ConvertFrom-DefaultHeiGeScheduledTask {
     }
 }
 
-function Get-DefaultHeiGeScheduledTask {
+function Get-DefaultCodexThemesScheduledTask {
     param([Parameter(Mandatory = $true)][string]$TaskName)
     $task = Get-ScheduledTask -TaskPath "\" -TaskName $TaskName -ErrorAction SilentlyContinue
     if (-not $task) { return $null }
-    return ConvertFrom-DefaultHeiGeScheduledTask -Task $task
+    return ConvertFrom-DefaultCodexThemesScheduledTask -Task $task
 }
 
-function Assert-HeiGeStoredTaskDefinition {
+function Assert-CodexThemesStoredTaskDefinition {
     param(
         [Parameter(Mandatory = $true)]$Expected,
         [Parameter(Mandatory = $true)]$Stored
@@ -332,13 +332,13 @@ function Assert-HeiGeStoredTaskDefinition {
     }
 }
 
-function Get-HeiGeInspectedTask {
+function Get-CodexThemesInspectedTask {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [scriptblock]$InspectProvider
     )
     if (-not $InspectProvider) {
-        $InspectProvider = { param($Name) Get-DefaultHeiGeScheduledTask -TaskName $Name }
+        $InspectProvider = { param($Name) Get-DefaultCodexThemesScheduledTask -TaskName $Name }
     }
     $matches = @(& $InspectProvider $TaskName)
     if ($matches.Count -eq 0) { return $null }
@@ -346,7 +346,7 @@ function Get-HeiGeInspectedTask {
     return $matches[0]
 }
 
-function Register-HeiGeScheduledTask {
+function Register-CodexThemesScheduledTask {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [Parameter(Mandatory = $true)][string]$NodePath,
@@ -361,17 +361,17 @@ function Register-HeiGeScheduledTask {
         [scriptblock]$InspectProvider,
         [scriptblock]$UnregisterProvider
     )
-    Assert-HeiGeTaskScope -TaskName $TaskName -TestMode:$TestMode
+    Assert-CodexThemesTaskScope -TaskName $TaskName -TestMode:$TestMode
     if (-not $TestMode -and $PSBoundParameters.ContainsKey("CurrentUserId")) {
         throw "production current user identity cannot be injected"
     }
-    if (-not $TestMode) { $CurrentUserId = Get-HeiGeCurrentUserId }
-    $StateDirectory = Resolve-HeiGeScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
+    if (-not $TestMode) { $CurrentUserId = Get-CodexThemesCurrentUserId }
+    $StateDirectory = Resolve-CodexThemesScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
     foreach ($leaf in @(@($NodePath, $ControllerPath, $PowerShellPath) | Where-Object { $_ })) {
         if (-not (Test-Path -LiteralPath $leaf -PathType Leaf)) { throw "Scheduled Task 依赖文件不存在：$leaf" }
     }
     [System.IO.Directory]::CreateDirectory($StateDirectory) | Out-Null
-    $definition = New-HeiGeTaskDefinition -TaskName $TaskName -NodePath $NodePath `
+    $definition = New-CodexThemesTaskDefinition -TaskName $TaskName -NodePath $NodePath `
         -ControllerPath $ControllerPath -StateDirectory $StateDirectory `
         -AppIdentityToken $AppIdentityToken `
         -CurrentUserId $CurrentUserId -PowerShellPath $PowerShellPath -Port $Port
@@ -379,7 +379,7 @@ function Register-HeiGeScheduledTask {
         throw "Windows PowerShell 可执行文件不存在：$($definition.Action.Execute)"
     }
     if (-not $RegisterProvider) {
-        $RegisterProvider = { param($Value) Register-DefaultHeiGeScheduledTask -Definition $Value }
+        $RegisterProvider = { param($Value) Register-DefaultCodexThemesScheduledTask -Definition $Value }
     }
     if (-not $UnregisterProvider) {
         $UnregisterProvider = {
@@ -389,14 +389,14 @@ function Register-HeiGeScheduledTask {
     }
     & $RegisterProvider $definition | Out-Null
     try {
-        $stored = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+        $stored = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
         if (-not $stored) { throw "stored task definition is missing" }
-        Assert-HeiGeStoredTaskDefinition -Expected $definition -Stored $stored
+        Assert-CodexThemesStoredTaskDefinition -Expected $definition -Stored $stored
     } catch {
         $verificationError = $_.Exception.Message
         try {
             & $UnregisterProvider $TaskName | Out-Null
-            $remaining = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+            $remaining = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
             if ($remaining) { throw "task remains after rollback" }
         } catch {
             throw "stored task definition verification failed: $verificationError; rollback failed: $($_.Exception.Message)"
@@ -411,7 +411,7 @@ function Register-HeiGeScheduledTask {
     }
 }
 
-function Remove-HeiGeStaleControllerHandshake {
+function Remove-CodexThemesStaleControllerHandshake {
     param([Parameter(Mandatory = $true)][string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) { return $false }
     $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
@@ -422,9 +422,9 @@ function Remove-HeiGeStaleControllerHandshake {
     return $true
 }
 
-function Get-HeiGeTaskFileKey {
+function Get-CodexThemesTaskFileKey {
     param([Parameter(Mandatory = $true)][string]$TaskName)
-    Assert-HeiGeKnownTaskName -TaskName $TaskName
+    Assert-CodexThemesKnownTaskName -TaskName $TaskName
     $sha256 = [System.Security.Cryptography.SHA256]::Create()
     try {
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($TaskName)
@@ -435,7 +435,7 @@ function Get-HeiGeTaskFileKey {
     }
 }
 
-function Invoke-HeiGeNodeControllerProcess {
+function Invoke-CodexThemesNodeControllerProcess {
     param(
         [Parameter(Mandatory = $true)][string]$NodePath,
         [Parameter(Mandatory = $true)][string]$CliPath,
@@ -447,27 +447,27 @@ function Invoke-HeiGeNodeControllerProcess {
         [scriptblock]$WaitProvider,
         [scriptblock]$StopProvider
     )
-    Assert-HeiGeKnownTaskName -TaskName $TaskName
-    Assert-HeiGeAppIdentityToken -AppIdentityToken $AppIdentityToken
+    Assert-CodexThemesKnownTaskName -TaskName $TaskName
+    Assert-CodexThemesAppIdentityToken -AppIdentityToken $AppIdentityToken
     foreach ($leaf in @($NodePath, $CliPath)) {
         if (-not (Test-Path -LiteralPath $leaf -PathType Leaf)) {
             throw "Node controller dependency does not exist: $leaf"
         }
     }
-    $key = Get-HeiGeTaskFileKey -TaskName $TaskName
+    $key = Get-CodexThemesTaskFileKey -TaskName $TaskName
     $stdoutPath = Join-Path $StateDirectory ("controller-" + $key + ".stdout.json")
     $stderrPath = Join-Path $StateDirectory ("controller-" + $key + ".stderr.log")
     Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
     $arguments = @(
-        (ConvertTo-HeiGeQuotedArgument -Value $CliPath),
+        (ConvertTo-CodexThemesQuotedArgument -Value $CliPath),
         "controller",
         "--background",
         "--platform",
         "windows",
         "--task-name",
-        (ConvertTo-HeiGeQuotedArgument -Value $TaskName),
+        (ConvertTo-CodexThemesQuotedArgument -Value $TaskName),
         "--state-directory",
-        (ConvertTo-HeiGeQuotedArgument -Value $StateDirectory),
+        (ConvertTo-CodexThemesQuotedArgument -Value $StateDirectory),
         "--port",
         [string]$Port
     ) -join " "
@@ -498,7 +498,7 @@ function Invoke-HeiGeNodeControllerProcess {
     }
     $process = $null
     try {
-        $environmentName = "HEIGE_WINDOWS_APP_IDENTITY"
+        $environmentName = "CODEX_THEMES_WINDOWS_APP_IDENTITY"
         $previousIdentity = [System.Environment]::GetEnvironmentVariable(
             $environmentName,
             [System.EnvironmentVariableTarget]::Process
@@ -561,16 +561,16 @@ function Invoke-HeiGeNodeControllerProcess {
     }
 }
 
-function Get-HeiGeScheduledTaskStatus {
+function Get-CodexThemesScheduledTaskStatus {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [string]$StateDirectory,
         [switch]$TestMode,
         [scriptblock]$InspectProvider
     )
-    Assert-HeiGeTaskScope -TaskName $TaskName -TestMode:$TestMode
-    $StateDirectory = Resolve-HeiGeScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
-    $stored = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+    Assert-CodexThemesTaskScope -TaskName $TaskName -TestMode:$TestMode
+    $StateDirectory = Resolve-CodexThemesScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
+    $stored = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
     if (-not $stored) {
         return [pscustomobject][ordered]@{
             TaskName = $TaskName
@@ -600,7 +600,7 @@ function Get-HeiGeScheduledTaskStatus {
     }
 }
 
-function Start-HeiGeScheduledTask {
+function Start-CodexThemesScheduledTask {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [Parameter(Mandatory = $true)][long]$ExpectedRevision,
@@ -614,13 +614,13 @@ function Start-HeiGeScheduledTask {
         [scriptblock]$SleepProvider,
         [scriptblock]$InspectProvider
     )
-    Assert-HeiGeTaskScope -TaskName $TaskName -TestMode:$TestMode
-    Assert-HeiGeStartRequestParameters -Revision $ExpectedRevision `
+    Assert-CodexThemesTaskScope -TaskName $TaskName -TestMode:$TestMode
+    Assert-CodexThemesStartRequestParameters -Revision $ExpectedRevision `
         -TransitionNonce $ExpectedTransitionNonce
-    $StateDirectory = Resolve-HeiGeScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
-    $requestPath = Get-HeiGeStartRequestPath -StateDirectory $StateDirectory -TaskName $TaskName
+    $StateDirectory = Resolve-CodexThemesScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
+    $requestPath = Get-CodexThemesStartRequestPath -StateDirectory $StateDirectory -TaskName $TaskName
     if (-not $RequestInspectorProvider) {
-        $RequestInspectorProvider = { param($Value) Test-HeiGeSafeStartRequestFile -Path $Value }
+        $RequestInspectorProvider = { param($Value) Test-CodexThemesSafeStartRequestFile -Path $Value }
     }
     $requestInspection = @(& $RequestInspectorProvider $requestPath)
     if ($requestInspection.Count -ne 1 -or $requestInspection[0] -isnot [bool]) {
@@ -629,7 +629,7 @@ function Start-HeiGeScheduledTask {
     if (-not [bool]$requestInspection[0]) {
         throw "controller start request is missing"
     }
-    $stored = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+    $stored = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
     if (-not $stored) { throw "Scheduled Task does not exist: $TaskName" }
     $previousState = if ($stored.PSObject.Properties.Name -contains "State") {
         [string]$stored.State
@@ -650,7 +650,7 @@ function Start-HeiGeScheduledTask {
         $attempts = $TimeoutSeconds * 10
         $settled = $false
         for ($attempt = 0; $attempt -lt $attempts; $attempt++) {
-            $current = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+            $current = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
             if (-not $current) { throw "Scheduled Task disappeared while stopping: $TaskName" }
             $state = if ($current.PSObject.Properties.Name -contains "State") {
                 [string]$current.State
@@ -676,7 +676,7 @@ function Start-HeiGeScheduledTask {
     }
 }
 
-function Unregister-HeiGeScheduledTask {
+function Unregister-CodexThemesScheduledTask {
     param(
         [Parameter(Mandatory = $true)][string]$TaskName,
         [string]$StateDirectory,
@@ -685,9 +685,9 @@ function Unregister-HeiGeScheduledTask {
         [scriptblock]$UnregisterProvider,
         [scriptblock]$InspectProvider
     )
-    Assert-HeiGeTaskScope -TaskName $TaskName -TestMode:$TestMode
-    $StateDirectory = Resolve-HeiGeScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
-    $before = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+    Assert-CodexThemesTaskScope -TaskName $TaskName -TestMode:$TestMode
+    $StateDirectory = Resolve-CodexThemesScopedStateDirectory -StateDirectory $StateDirectory -TestMode:$TestMode
+    $before = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
     if (-not $UnregisterProvider) {
         $UnregisterProvider = {
             param($Name)
@@ -695,11 +695,11 @@ function Unregister-HeiGeScheduledTask {
         }
     }
     & $UnregisterProvider $TaskName | Out-Null
-    $after = Get-HeiGeInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
+    $after = Get-CodexThemesInspectedTask -TaskName $TaskName -InspectProvider $InspectProvider
     if ($after) { throw "Scheduled Task 注销后仍存在：$TaskName" }
     if (-not $PreserveHandshake) {
-        $handshakePath = Get-HeiGeHandshakePath -StateDirectory $StateDirectory -TaskName $TaskName
-        Remove-HeiGeStaleControllerHandshake -Path $handshakePath | Out-Null
+        $handshakePath = Get-CodexThemesHandshakePath -StateDirectory $StateDirectory -TaskName $TaskName
+        Remove-CodexThemesStaleControllerHandshake -Path $handshakePath | Out-Null
     }
     return [pscustomobject][ordered]@{
         TaskName = $TaskName
