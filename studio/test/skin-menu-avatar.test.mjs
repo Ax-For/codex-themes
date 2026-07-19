@@ -7,6 +7,7 @@ import {
   buildSkinMenuScript,
   computeThemeMenuLeft,
   computeXpQqAvatarCrop,
+  deriveXpQqLevelBadges,
   deriveXpQqContactIdentity,
   xpQqContactStatus,
   isSafeXpQqAvatarDataUrl,
@@ -92,7 +93,7 @@ test("XP QQ avatar persistence only accepts bounded raster data URLs", () => {
   ), false);
 });
 
-test("XP QQ profile accepts bounded nickname, signature and star level", () => {
+test("XP QQ profile accepts bounded nickname, signature and numeric QQ level", () => {
   assert.deepEqual(normalizeXpQqProfile({
     nickname: "  AX_FOR  ",
     signature: " 等到狮子身上落满麻雀... ",
@@ -114,6 +115,39 @@ test("XP QQ profile accepts bounded nickname, signature and star level", () => {
   });
 });
 
+test("XP QQ level follows the classic base-four badge rules", () => {
+  assert.deepEqual(deriveXpQqLevelBadges(0, XP_QQ_PROFILE_RULES), {
+    level: 0,
+    crowns: 0,
+    suns: 0,
+    moons: 0,
+    stars: 0,
+    text: "",
+    label: "QQ 等级 0 级：暂无等级图标",
+  });
+  assert.equal(deriveXpQqLevelBadges(3, XP_QQ_PROFILE_RULES).text, "⭐⭐⭐");
+  assert.equal(deriveXpQqLevelBadges(4, XP_QQ_PROFILE_RULES).text, "🌙");
+  assert.equal(deriveXpQqLevelBadges(20, XP_QQ_PROFILE_RULES).text, "☀️🌙");
+  assert.equal(deriveXpQqLevelBadges(64, XP_QQ_PROFILE_RULES).text, "👑");
+  assert.deepEqual(deriveXpQqLevelBadges(100, XP_QQ_PROFILE_RULES), {
+    level: 100,
+    crowns: 1,
+    suns: 2,
+    moons: 1,
+    stars: 0,
+    text: "👑☀️☀️🌙",
+    label: "QQ 等级 100 级：1 皇冠、2 太阳、1 月亮",
+  });
+  assert.equal(deriveXpQqLevelBadges(255, XP_QQ_PROFILE_RULES).text, "👑👑👑☀️☀️☀️🌙🌙🌙⭐⭐⭐");
+  assert.equal(deriveXpQqLevelBadges(256, XP_QQ_PROFILE_RULES).text, "👑👑👑👑");
+});
+
+test("XP QQ level rejects values outside the supported QQ range", () => {
+  assert.equal(deriveXpQqLevelBadges(-1, XP_QQ_PROFILE_RULES), null);
+  assert.equal(deriveXpQqLevelBadges(257, XP_QQ_PROFILE_RULES), null);
+  assert.equal(deriveXpQqLevelBadges(2.5, XP_QQ_PROFILE_RULES), null);
+});
+
 test("XP QQ profile rejects malformed or oversized stored values", () => {
   assert.equal(normalizeXpQqProfile(null, XP_QQ_PROFILE_RULES), null);
   assert.equal(normalizeXpQqProfile({ nickname: "", signature: "在线", level: 3 }, XP_QQ_PROFILE_RULES), null);
@@ -122,7 +156,8 @@ test("XP QQ profile rejects malformed or oversized stored values", () => {
     signature: "在线",
     level: 3,
   }, XP_QQ_PROFILE_RULES), null);
-  assert.equal(normalizeXpQqProfile({ nickname: "AX", signature: "在线", level: 0 }, XP_QQ_PROFILE_RULES), null);
+  assert.equal(normalizeXpQqProfile({ nickname: "AX", signature: "在线", level: -1 }, XP_QQ_PROFILE_RULES), null);
+  assert.equal(normalizeXpQqProfile({ nickname: "AX", signature: "在线", level: 257 }, XP_QQ_PROFILE_RULES), null);
   assert.equal(normalizeXpQqProfile({ nickname: "AX", signature: "在线", level: 2.5 }, XP_QQ_PROFILE_RULES), null);
   assert.equal(normalizeXpQqProfile({ nickname: "AX", signature: "在线", level: 3, extra: true }, XP_QQ_PROFILE_RULES), null);
 });
@@ -186,6 +221,12 @@ test("generated skin menu installs the XP QQ runtime helpers", () => {
   assert.match(script, /syncXpQqUserNames/);
   assert.match(script, /data-codex-themes-xp-qq-nickname/);
   assert.match(script, /QQ 等级/);
+  assert.match(script, /deriveXpQqLevelBadges/);
+  assert.match(script, /levelInput\.type = "number"/);
+  assert.match(script, /levelInput\.min = String\(data\.profile\.levelMin\)/);
+  assert.match(script, /levelInput\.max = String\(data\.profile\.levelMax\)/);
+  assert.match(script, /4 星＝1 月亮 · 4 月亮＝1 太阳 · 4 太阳＝1 皇冠/);
+  assert.doesNotMatch(script, /const levelSelect/);
   assert.match(script, /profileCard\.style\.display = active \? "" : "none"/);
   assert.match(script, /avatarButton\.style\.display = active \? "" : "none"/);
   assert.match(script, /ResizeObserver/);

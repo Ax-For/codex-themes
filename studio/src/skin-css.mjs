@@ -369,8 +369,8 @@ function buildVariantCss(id, heroDataUrl) {
 
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-profile-level"] {
   color: #b56e16;
-  font: 11px/1.2 Tahoma, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-  letter-spacing: 1px;
+  font: 10px/1.2 Tahoma, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  letter-spacing: 0;
 }
 
 :root[data-codex-themes-skin="xp-qq"] #codex-themes-xp-qq-profile-editor {
@@ -456,6 +456,13 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-profile-field"] select:focus {
   border-color: #4a91cc;
   outline: 1px solid #b8d7ee;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-profile-level-hint"] {
+  display: block;
+  margin: -2px 0 1px 69px;
+  color: #6a8397;
+  font: 10px/1.35 Tahoma, "Microsoft YaHei", sans-serif;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-profile-feedback"]:not([hidden]) {

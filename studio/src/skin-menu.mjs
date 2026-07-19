@@ -22,8 +22,8 @@ export const XP_QQ_PROFILE_RULES = Object.freeze({
   storageKey: "codexThemesXpQqProfileV1",
   nicknameMax: 24,
   signatureMax: 48,
-  levelMin: 1,
-  levelMax: 5,
+  levelMin: 0,
+  levelMax: 256,
   defaults: Object.freeze({
     nickname: "For Ax",
     signature: "在线 · 正在处理任务",
@@ -53,6 +53,42 @@ export function normalizeXpQqProfile(value, rules = XP_QQ_PROFILE_RULES) {
     || value.level > rules.levelMax
   ) return null;
   return { nickname, signature, level: value.level };
+}
+
+export function deriveXpQqLevelBadges(level, rules = XP_QQ_PROFILE_RULES) {
+  if (
+    !Number.isInteger(level)
+    || level < rules.levelMin
+    || level > rules.levelMax
+  ) return null;
+
+  let remainder = level;
+  const crowns = Math.floor(remainder / 64);
+  remainder %= 64;
+  const suns = Math.floor(remainder / 16);
+  remainder %= 16;
+  const moons = Math.floor(remainder / 4);
+  const stars = remainder % 4;
+  const groups = [
+    { count: crowns, icon: "👑", name: "皇冠" },
+    { count: suns, icon: "☀️", name: "太阳" },
+    { count: moons, icon: "🌙", name: "月亮" },
+    { count: stars, icon: "⭐", name: "星星" },
+  ];
+  const text = groups.map(({ count, icon }) => icon.repeat(count)).join("");
+  const summary = groups
+    .filter(({ count }) => count > 0)
+    .map(({ count, name }) => `${count} ${name}`)
+    .join("、") || "暂无等级图标";
+  return {
+    level,
+    crowns,
+    suns,
+    moons,
+    stars,
+    text,
+    label: `QQ 等级 ${level} 级：${summary}`,
+  };
 }
 
 export function deriveXpQqContactIdentity(title, threadId = "") {
@@ -224,6 +260,7 @@ export function buildSkinMenuScript({
   const computeXpQqAvatarCrop = (${computeXpQqAvatarCrop.toString()});
   const isSafeXpQqAvatarDataUrl = (${isSafeXpQqAvatarDataUrl.toString()});
   const normalizeXpQqProfile = (${normalizeXpQqProfile.toString()});
+  const deriveXpQqLevelBadges = (${deriveXpQqLevelBadges.toString()});
   const deriveXpQqContactIdentity = (${deriveXpQqContactIdentity.toString()});
   const xpQqContactStatus = (${xpQqContactStatus.toString()});
   const computeThemeMenuLeft = (${computeThemeMenuLeft.toString()});
@@ -975,14 +1012,20 @@ export function buildSkinMenuScript({
   signatureInput.autocomplete = "off";
   signatureInput.placeholder = "写一句个性签名";
 
-  const levelSelect = document.createElement("select");
-  levelSelect.name = "level";
-  for (let level = data.profile.levelMin; level <= data.profile.levelMax; level += 1) {
-    const option = document.createElement("option");
-    option.value = String(level);
-    option.textContent = "⭐".repeat(level) + "（" + level + " 星）";
-    levelSelect.appendChild(option);
-  }
+  const levelInput = document.createElement("input");
+  levelInput.name = "level";
+  levelInput.type = "number";
+  levelInput.min = String(data.profile.levelMin);
+  levelInput.max = String(data.profile.levelMax);
+  levelInput.step = "1";
+  levelInput.inputMode = "numeric";
+  levelInput.autocomplete = "off";
+  levelInput.placeholder = data.profile.levelMin + "–" + data.profile.levelMax;
+  const levelHint = document.createElement("span");
+  levelHint.id = data.profile.panelId + "-level-hint";
+  levelHint.dataset.codexThemesRole = "xp-qq-profile-level-hint";
+  levelHint.textContent = "4 星＝1 月亮 · 4 月亮＝1 太阳 · 4 太阳＝1 皇冠";
+  levelInput.setAttribute("aria-describedby", levelHint.id);
 
   const profileFeedback = document.createElement("div");
   profileFeedback.dataset.codexThemesRole = "xp-qq-profile-feedback";
@@ -1003,14 +1046,14 @@ export function buildSkinMenuScript({
     profileHeading,
     profileField("网名 ID", nicknameInput),
     profileField("QQ 签名", signatureInput),
-    profileField("等级", levelSelect),
+    profileField("QQ 等级", levelInput),
+    levelHint,
     profileFeedback,
     profileActions,
   );
 
   let currentXpQqProfile = { ...data.profile.defaults };
   let syncXpQqUserNames = () => {};
-  const levelText = (level) => "👑 🌙 " + "⭐".repeat(level);
   const closeProfileEditor = ({ restoreFocus = false } = {}) => {
     if (profilePanel.hidden) return;
     profilePanel.hidden = true;
@@ -1023,15 +1066,16 @@ export function buildSkinMenuScript({
     currentXpQqProfile = { ...profile };
     profileNickname.textContent = profile.nickname;
     profileSignature.textContent = profile.signature || "还没有个性签名";
-    profileLevel.textContent = levelText(profile.level);
-    profileLevel.setAttribute("aria-label", "QQ 等级 " + profile.level + " 星");
+    const levelBadges = deriveXpQqLevelBadges(profile.level, data.profile);
+    profileLevel.textContent = levelBadges?.text || "0 级";
+    profileLevel.setAttribute("aria-label", levelBadges?.label || "QQ 等级无效");
     profileCard.title = profile.nickname + "\\n" + (profile.signature || "还没有个性签名");
     syncXpQqUserNames();
   };
   const openProfileEditor = () => {
     nicknameInput.value = currentXpQqProfile.nickname;
     signatureInput.value = currentXpQqProfile.signature;
-    levelSelect.value = String(currentXpQqProfile.level);
+    levelInput.value = String(currentXpQqProfile.level);
     profileFeedback.hidden = true;
     profileFeedback.textContent = "";
     profilePanel.hidden = false;
@@ -1085,12 +1129,13 @@ export function buildSkinMenuScript({
     const profile = normalizeXpQqProfile({
       nickname: nicknameInput.value,
       signature: signatureInput.value,
-      level: Number(levelSelect.value),
+      level: Number(levelInput.value),
     }, data.profile);
     if (profile === null) {
-      profileFeedback.textContent = "请填写 1–" + data.profile.nicknameMax + " 字网名，并选择有效等级";
+      profileFeedback.textContent = "请填写 1–" + data.profile.nicknameMax + " 字网名，并输入 " + data.profile.levelMin + "–" + data.profile.levelMax + " 的整数等级";
       profileFeedback.hidden = false;
-      nicknameInput.focus();
+      if (!nicknameInput.value.trim()) nicknameInput.focus();
+      else levelInput.focus();
       return;
     }
     const persisted = saveProfile(profile);
