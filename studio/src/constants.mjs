@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { posix, win32 } from "node:path";
 
 export const PRODUCT_ID = "codex-themes";
 export const PRODUCT_NAME = "Codex Themes";
@@ -20,20 +20,21 @@ export function resolveStudioPaths({
   platform = process.platform,
   env = process.env,
 } = {}) {
-  const installRoot = join(home, ".codex", PRODUCT_ID);
+  const path = platform === "win32" ? win32 : posix;
+  const installRoot = path.join(home, ".codex", PRODUCT_ID);
   const stateRoot =
     platform === "win32"
-      ? join(env.APPDATA ?? join(home, "AppData", "Roaming"), "CodexThemes")
-      : join(home, "Library", "Application Support", "CodexThemes");
+      ? path.join(env.APPDATA ?? path.join(home, "AppData", "Roaming"), "CodexThemes")
+      : path.join(home, "Library", "Application Support", "CodexThemes");
 
   return {
     installRoot,
     stateRoot,
-    statePath: join(stateRoot, "state.json"),
-    sessionPath: join(stateRoot, "session.json"),
-    transitionPath: join(stateRoot, "transition.json"),
-    lockPath: join(stateRoot, "operation.lock"),
-    logPath: join(stateRoot, "injector.log"),
-    userThemesRoot: join(stateRoot, "themes"),
+    statePath: path.join(stateRoot, "state.json"),
+    sessionPath: path.join(stateRoot, "session.json"),
+    transitionPath: path.join(stateRoot, "transition.json"),
+    lockPath: path.join(stateRoot, "operation.lock"),
+    logPath: path.join(stateRoot, "injector.log"),
+    userThemesRoot: path.join(stateRoot, "themes"),
   };
 }

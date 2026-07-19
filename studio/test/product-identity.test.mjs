@@ -58,12 +58,13 @@ test("product identity uses the repository name on macOS and Windows", () => {
   assert.equal(mac.stateRoot, "/Users/tester/Library/Application Support/CodexThemes");
 
   const windows = resolveStudioPaths({
-    home: "/Users/tester",
+    home: "C:\\Users\\tester",
     platform: "win32",
-    env: { APPDATA: "/Users/tester/AppData/Roaming" },
+    env: { APPDATA: "C:\\Users\\tester\\AppData\\Roaming" },
   });
-  assert.equal(windows.installRoot, "/Users/tester/.codex/codex-themes");
-  assert.equal(windows.stateRoot, "/Users/tester/AppData/Roaming/CodexThemes");
+  assert.equal(windows.installRoot, "C:\\Users\\tester\\.codex\\codex-themes");
+  assert.equal(windows.stateRoot, "C:\\Users\\tester\\AppData\\Roaming\\CodexThemes");
+  assert.equal(windows.statePath, "C:\\Users\\tester\\AppData\\Roaming\\CodexThemes\\state.json");
 });
 
 test("repository text and paths contain no retired product branding", async () => {
