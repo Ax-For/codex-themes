@@ -115,6 +115,16 @@ pets/lan-kou/           原创 QQ 风格 Codex 宠物与验收材料
 
 这个项目通过 Codex Desktop renderer 注入 CSS 和受控脚本实现主题，并未修改 Codex 产品源码。Codex 更新 DOM 结构后，个别样式可能需要跟进适配。
 
+当前最新实测兼容版本：
+
+- Codex Desktop `26.715.72359`
+- macOS `26.5.2`（Apple Silicon）
+- 验证日期：`2026-07-23`
+
+这里的版本号表示“已经完成实际启动、常驻和注入验证的最新版本”，不是对未来 Codex 版本的永久兼容保证。Windows 安装入口和控制器测试仍受支持，但上述桌面版本的实机验证环境为 macOS。
+
+如果另一台机器在相同 Codex 版本下仍然加载失败，请阅读[安装与启动故障排查](./docs/TROUBLESHOOTING.md)。仅下载或更新 Git 仓库不会自动更新 `~/.codex/codex-themes` 中的已安装运行时，也不会替另一台机器创建本地状态和后台启动服务。
+
 本项目与 OpenAI、Tencent QQ 或 Microsoft 无隶属关系。Codex、QQ、Windows 等名称和商标归各自权利人所有。
 
 ## License
