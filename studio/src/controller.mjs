@@ -20,6 +20,8 @@ const RENDERER_GENERATION = /^[a-f0-9]{32}$/;
 const MENU_REQUEST_ID = /^[a-f0-9]{32}$/;
 const THEME_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_RELAUNCH_ATTEMPTS = 3;
+const RELAUNCH_RETRY_DELAY_MS = 45_000;
+const RELAUNCH_BUDGET_RESET_MS = 5 * 60_000;
 const ACTIONS = new Set([
   "idle",
   "inject",
@@ -313,6 +315,7 @@ function normalizedDependencies(input) {
     logger: input.logger ?? noopLogger(),
     launcherName: input.launcherName ?? "Codex 主题启动器",
     controlPort: input.controlPort ?? 0,
+    now: requireFunction(input.now ?? Date.now, "now"),
   });
 }
 
@@ -542,19 +545,27 @@ export function createSkinController(input) {
 
   // 常驻承诺：用户正常启动的 Codex 不带 CDP，只有后台服务能把它拉回皮肤模式。
   // 三重刹车，因为重启后的 Codex 若仍无 CDP 会变成另一个原生进程，单靠身份去重挡不住循环：
-  //   1. 同一进程身份只尝试一次；
-  //   2. 连续失败用尽预算后彻底停手，等待人工介入；
-  //   3. 任何一次重启把 CDP 拉起来，预算即清零，用户后续重启照常被接管。
+  //   1. 同一进程在 detached helper 的最长正常执行窗口内只尝试一次；
+  //   2. 每个时间窗最多尝试三次，避免升级异常时形成快速重启循环；
+  //   3. 时间窗到期自动重新武装，helper/应用升级的瞬时失败不会让常驻永久失效。
   let relaunchAttempt = null;
   let relaunchFailures = 0;
+  let relaunchWindowStartedAt = null;
   const clearRelaunchBudget = () => {
     relaunchAttempt = null;
     relaunchFailures = 0;
+    relaunchWindowStartedAt = null;
+  };
+  const relaunchClock = () => {
+    const value = deps.now();
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw new Error("controller clock must return a non-negative safe integer");
+    }
+    return value;
   };
   const relaunchNativeCodex = async (state) => {
     if (!deps.backgroundProcess) return false;
     if (deps.probeNativeProcess === null || deps.restartIntoCdp === null) return false;
-    if (relaunchFailures >= MAX_RELAUNCH_ATTEMPTS) return false;
     let native;
     try {
       native = normalizeProcessProbe(await deps.probeNativeProcess());
@@ -563,8 +574,22 @@ export function createSkinController(input) {
       return false;
     }
     if (native === null) return false;
-    if (relaunchAttempt !== null && sameProcessIdentity(relaunchAttempt, native)) return false;
-    relaunchAttempt = native;
+    const currentTime = relaunchClock();
+    if (
+      relaunchWindowStartedAt === null ||
+      currentTime < relaunchWindowStartedAt ||
+      currentTime - relaunchWindowStartedAt >= RELAUNCH_BUDGET_RESET_MS
+    ) {
+      clearRelaunchBudget();
+      relaunchWindowStartedAt = currentTime;
+    }
+    if (
+      relaunchAttempt !== null &&
+      sameProcessIdentity(relaunchAttempt.process, native) &&
+      currentTime - relaunchAttempt.attemptedAt < RELAUNCH_RETRY_DELAY_MS
+    ) return false;
+    if (relaunchFailures >= MAX_RELAUNCH_ATTEMPTS) return false;
+    relaunchAttempt = { process: native, attemptedAt: currentTime };
     relaunchFailures += 1;
     try {
       await deps.restartIntoCdp({ process: native, themeId: state.selectedThemeId });

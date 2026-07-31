@@ -1343,6 +1343,9 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant],
 :root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"] {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-left: 44px;
   padding: 13px 15px !important;
   color: var(--qq-ink) !important;
@@ -1350,6 +1353,37 @@ function buildVariantCss(id, heroDataUrl) {
   border-radius: 5px 5px 5px 2px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(44, 78, 103, .08);
+}
+
+/* Codex wide Markdown blocks use negative thread margins in the native layout.
+ * A bordered QQ message bubble owns its content width, so contain tables here
+ * and keep overflow local to the table scroller instead of the whole message. */
+:root[data-codex-themes-skin="xp-qq"] :is([data-wide-markdown-block-kind="table"], [data-markdown-table="true"]) {
+  --thread-content-margin: 0px !important;
+  --wide-block-container-max-width: 100% !important;
+  --wide-block-default-max-width: 100% !important;
+  --wide-block-width: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-inline: 0 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] :is([data-wide-markdown-block-kind="table"], [data-markdown-table="true"]) [class*="_tableScroller_"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  justify-content: flex-start !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] :is([data-wide-markdown-block-kind="table"], [data-markdown-table="true"]) [class*="_tableWrapper_"] {
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] :is([data-wide-markdown-block-kind="table"], [data-markdown-table="true"]) table {
+  min-width: 100% !important;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant]::before,

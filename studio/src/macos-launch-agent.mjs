@@ -2177,12 +2177,15 @@ export async function inspectLaunchAgent(input = {}) {
     ? await readPlistSnapshot(options, options.plistPath, snapshot)
     : null;
   await assertSnapshotCurrent(options.fs, options.plistPath, snapshot);
+  const job = await inspectLoadedJob(options, options.label);
   return {
     label: options.label,
     plistPath: options.plistPath,
     plistExists: snapshot !== null,
     plistLabel: plist?.Label ?? null,
-    loaded: await isLoaded(options),
+    loaded: job.loaded,
+    running: job.loaded && job.pid !== null,
+    pid: job.pid,
   };
 }
 

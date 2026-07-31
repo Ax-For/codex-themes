@@ -85,3 +85,9 @@ test("continuous integration verifies both desktop installer platforms", async (
   assert.match(workflow, /\[scriptblock\]::Create/);
   assert.match(workflow, /npm run check/);
 });
+
+test("macOS background inspection distinguishes a loaded job from a running controller", async () => {
+  const source = await readFile(join(studioRoot, "src", "macos-launch-agent.mjs"), "utf8");
+  assert.match(source, /const job = await inspectLoadedJob\(options, options\.label\)/);
+  assert.match(source, /running: job\.loaded && job\.pid !== null/);
+});

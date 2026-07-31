@@ -204,7 +204,11 @@ test("generated skin menu installs the XP QQ runtime helpers", () => {
   assert.match(script, /restoreXpQqSidebarActions/);
   assert.match(script, /xp-qq-sidebar-action/);
   assert.match(script, /data-codex-themes-native-action-hidden/);
-  assert.match(script, /"新建任务", "拉取请求", "站点", "已安排", "插件"/);
+  assert.match(
+    script,
+    /label: "新对话", nativeLabels: \["新对话", "新建任务"\]/,
+  );
+  assert.match(script, /label: "拉取请求", nativeLabels: \["拉取请求"\]/);
   assert.match(script, /syncXpQqContacts/);
   assert.match(script, /clearXpQqContacts/);
   assert.match(script, /xp-qq-contact-group/);

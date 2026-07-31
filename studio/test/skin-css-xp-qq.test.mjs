@@ -138,6 +138,30 @@ test("XP QQ CSS reuses the custom profile image for user messages", () => {
   assert.match(css, /\[data-codex-themes-xp-qq-avatar="custom"\] \[data-user-message-bubble\]::after \{[^}]*background-size: cover !important/s);
 });
 
+test("XP QQ CSS keeps wide Markdown tables inside assistant message bubbles", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(
+    css,
+    /\[data-local-conversation-final-assistant\],\n:root\[data-codex-themes-skin="xp-qq"\] main \[class\*="conversation-item-gap"\] \{[^}]*min-width: 0;[^}]*max-width: 100%;/s,
+  );
+  assert.match(
+    css,
+    /:is\(\[data-wide-markdown-block-kind="table"\], \[data-markdown-table="true"\]\) \{[^}]*--thread-content-margin: 0px !important;[^}]*--wide-block-width: 100% !important;[^}]*width: 100% !important;[^}]*max-width: 100% !important;[^}]*margin-inline: 0 !important;/s,
+  );
+  assert.match(
+    css,
+    /:is\(\[data-wide-markdown-block-kind="table"\], \[data-markdown-table="true"\]\) \[class\*="_tableScroller_"\] \{[^}]*width: 100% !important;[^}]*max-width: 100% !important;[^}]*overflow-x: auto !important;[^}]*justify-content: flex-start !important;/s,
+  );
+  assert.match(
+    css,
+    /:is\(\[data-wide-markdown-block-kind="table"\], \[data-markdown-table="true"\]\) \[class\*="_tableWrapper_"\] \{[^}]*min-width: 100% !important;[^}]*margin-inline: 0 !important;/s,
+  );
+});
+
 test("XP QQ CSS presents an editable compact identity profile", () => {
   const css = buildSkinCss({
     theme: { id: "xp-qq", colors: {} },

@@ -1245,7 +1245,7 @@ export async function productionController({
         status = {
           ...value,
           registered: value.plistExists === true && value.loaded === true,
-          running: value.loaded === true,
+          running: value.running === true,
         };
       } else {
         if (deferredWindowsUnregister) {
@@ -1377,12 +1377,23 @@ export async function runControllerProcess(controller, {
   if (ephemeralRuntime && result?.persistenceEnabled === true) {
     return handoffEphemeral(result);
   }
-  if (once || result.action === "unregister" || result.action === "error") {
+  if (
+    once ||
+    result.action === "unregister" ||
+    (result.action === "error" && backgroundRuntime === null)
+  ) {
     await controller.stop();
     return result;
   }
   while (true) {
-    await wait(1000);
+    const failures = Number.isSafeInteger(result?.consecutiveFailures) &&
+        result.consecutiveFailures > 0
+      ? result.consecutiveFailures
+      : 1;
+    const delay = result?.action === "error"
+      ? Math.min(30_000, 1_000 * (2 ** Math.min(failures, 5)))
+      : 1_000;
+    await wait(delay);
     result = await controller.tick();
     if (result.action === "unregister" || result.action === "handoff") {
       await controller.stop();

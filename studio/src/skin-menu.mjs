@@ -1306,7 +1306,13 @@ export function buildSkinMenuScript({
    * Keep every React-owned Codex node in its original parent. The owned proxy
    * toolbar delegates to the native buttons so mode changes can safely unmount
    * the original sidebar without React reconciling externally moved nodes. */
-  const sidebarActionLabels = ["新建任务", "拉取请求", "站点", "已安排", "插件"];
+  const sidebarActionSpecs = [
+    { label: "新对话", nativeLabels: ["新对话", "新建任务"] },
+    { label: "拉取请求", nativeLabels: ["拉取请求"] },
+    { label: "站点", nativeLabels: ["站点"] },
+    { label: "已安排", nativeLabels: ["已安排"] },
+    { label: "插件", nativeLabels: ["插件"] },
+  ];
   let sidebarActionsToolbar = null;
   let sidebarActionNativeNodes = [];
   let sidebarActionNativeButtons = [];
@@ -1352,9 +1358,9 @@ export function buildSkinMenuScript({
     const nav = document.querySelector(".app-shell-left-panel nav");
     const scroll = nav?.querySelector("[data-app-action-sidebar-scroll]") ?? null;
     if (!nav || !scroll) return;
-    const buttons = sidebarActionLabels.map((label) => (
+    const buttons = sidebarActionSpecs.map(({ nativeLabels }) => (
       [...nav.querySelectorAll("button")].find((candidate) => (
-        (candidate.textContent ?? "").trim() === label
+        nativeLabels.includes((candidate.textContent ?? "").trim())
       )) ?? null
     ));
     if (buttons.some((candidate) => candidate === null)) return;
@@ -1377,12 +1383,13 @@ export function buildSkinMenuScript({
       node.setAttribute("data-codex-themes-native-action-hidden", "true");
     }
     buttons.forEach((nativeButton, index) => {
+      const action = sidebarActionSpecs[index];
       const proxy = document.createElement("button");
       proxy.type = "button";
       proxy.dataset.codexThemesRole = "xp-qq-sidebar-action";
-      proxy.dataset.codexThemesSidebarActionLabel = sidebarActionLabels[index];
+      proxy.dataset.codexThemesSidebarActionLabel = action.label;
       proxy.dataset.codexThemesSidebarActionsGeneration = generation;
-      proxy.setAttribute("aria-label", sidebarActionLabels[index]);
+      proxy.setAttribute("aria-label", action.label);
       proxy.disabled = nativeButton.disabled;
       const icon = nativeButton.querySelector("svg")?.cloneNode(true) ?? null;
       if (icon) {
@@ -1391,7 +1398,7 @@ export function buildSkinMenuScript({
       }
       const label = document.createElement("span");
       label.className = "codex-themes-xp-qq-sidebar-action-label";
-      label.textContent = sidebarActionLabels[index];
+      label.textContent = action.label;
       proxy.appendChild(label);
       listen(proxy, "click", () => {
         if (nativeButton.isConnected && !nativeButton.disabled) nativeButton.click();
