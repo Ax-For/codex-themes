@@ -147,7 +147,7 @@ test("XP QQ CSS keeps wide Markdown tables inside assistant message bubbles", ()
 
   assert.match(
     css,
-    /\[data-local-conversation-final-assistant\],\n:root\[data-codex-themes-skin="xp-qq"\] main \[class\*="conversation-item-gap"\] \{[^}]*min-width: 0;[^}]*max-width: 100%;/s,
+    /\[data-local-conversation-final-assistant\] \{[^}]*min-width: 0;[^}]*max-width: 100%;/s,
   );
   assert.match(
     css,
@@ -182,8 +182,17 @@ test("XP QQ CSS gives long assistant Markdown a restrained readable type scale",
   );
   assert.match(
     css,
-    /main \[class\*="conversation-item-gap"\]:not\(\[data-local-conversation-final-assistant\]\) \{[^}]*border: 0 !important;[^}]*background: transparent !important;[^}]*box-shadow: none !important;/s,
+    /main \[class~="gap-\[var\(--conversation-item-gap,16px\)\]"\] \[data-content-search-unit-key\]:not\(\[data-local-conversation-final-assistant\] \*\):not\(\[class\*="conversation-patch-file"\] \*\) \{[^}]*max-width: 720px;[^}]*margin-left: 28px;[^}]*padding: 7px 10px !important;[^}]*border: 1px solid #d7e4ed !important;[^}]*background: rgba\(255, 255, 255, \.72\) !important;/s,
   );
+  assert.match(
+    css,
+    /main \[class~="gap-\[var\(--conversation-item-gap,16px\)\]"\] \[data-content-search-unit-key\]:not\(\[data-local-conversation-final-assistant\] \*\):not\(\[class\*="conversation-patch-file"\] \*\)::before \{[^}]*content: "···" !important;[^}]*width: 18px;[^}]*height: 18px;/s,
+  );
+  assert.match(
+    css,
+    /main \[class~="gap-\[var\(--conversation-item-gap,16px\)\]"\] \[data-content-search-unit-key\]:not\(\[data-local-conversation-final-assistant\] \*\):not\(\[class\*="conversation-patch-file"\] \*\) \{[^}]*font-size: 13px !important;[^}]*line-height: 1\.65 !important;/s,
+  );
+  assert.doesNotMatch(css, /\[class\*="conversation-item-gap"\]/);
 });
 
 test("XP QQ CSS isolates document, file, diff, settings and terminal surfaces", () => {

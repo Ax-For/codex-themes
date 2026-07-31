@@ -1349,8 +1349,7 @@ function buildVariantCss(id, heroDataUrl) {
   background-size: cover !important;
 }
 
-:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant],
-:root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"] {
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] {
   position: relative;
   min-width: 0;
   max-width: 100%;
@@ -1397,8 +1396,7 @@ function buildVariantCss(id, heroDataUrl) {
   min-width: 100% !important;
 }
 
-:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant]::before,
-:root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"]::before {
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant]::before {
   position: absolute;
   top: -1px;
   left: -43px;
@@ -1464,20 +1462,49 @@ function buildVariantCss(id, heroDataUrl) {
   box-shadow: inset 0 1px #fff !important;
 }
 
-/* Phase-two polish: keep the QQ shell expressive while document surfaces stay
- * calm, readable and independent from Codex's internal wrapper depth. */
-:root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"]:not([data-local-conversation-final-assistant]) {
-  margin-left: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+/* New Codex builds place the user bubble, process updates and final answer in
+ * one turn wrapper. Frame only individual process text units so the turn can
+ * keep its native layout and nested patch/file rows remain untouched. */
+:root[data-codex-themes-skin="xp-qq"] main [class~="gap-[var(--conversation-item-gap,16px)]"] [data-content-search-unit-key]:not([data-local-conversation-final-assistant] *):not([class*="conversation-patch-file"] *) {
+  position: relative;
+  min-width: 0;
+  max-width: 720px;
+  box-sizing: border-box;
+  margin-left: 28px;
+  padding: 7px 10px !important;
+  color: #536c80 !important;
+  border: 1px solid #d7e4ed !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, .72) !important;
+  box-shadow: 0 1px 1px rgba(42, 72, 94, .04) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
 }
 
-:root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"]:not([data-local-conversation-final-assistant])::before {
-  display: none !important;
-  content: none !important;
+:root[data-codex-themes-skin="xp-qq"] main [class~="gap-[var(--conversation-item-gap,16px)]"] [data-content-search-unit-key]:not([data-local-conversation-final-assistant] *):not([class*="conversation-patch-file"] *)::before {
+  position: absolute;
+  top: 7px;
+  left: -29px;
+  display: grid !important;
+  place-items: center;
+  content: "···" !important;
+  width: 18px;
+  height: 18px;
+  color: #69859a;
+  border: 1px solid #bdd2e1;
+  border-radius: 50%;
+  background: #f5f9fc;
+  box-shadow: 0 0 0 3px var(--qq-workspace);
+  font: 700 9px/1 Tahoma, sans-serif;
+  letter-spacing: -1px;
+}
+
+:root[data-codex-themes-skin="xp-qq"] main [class~="gap-[var(--conversation-item-gap,16px)]"] [data-content-search-unit-key]:not([data-local-conversation-final-assistant] *):not([class*="conversation-patch-file"] *) :is(p, ul, ol) {
+  margin-block: 0 8px !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] main [class~="gap-[var(--conversation-item-gap,16px)]"] [data-content-search-unit-key]:not([data-local-conversation-final-assistant] *):not([class*="conversation-patch-file"] *) :is(p, ul, ol):last-child {
+  margin-bottom: 0 !important;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] {
