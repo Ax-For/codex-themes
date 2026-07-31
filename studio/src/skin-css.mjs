@@ -34,6 +34,15 @@ function buildVariantCss(id, heroDataUrl) {
   --qq-paper: #ffffff;
   --qq-ink: #20364a;
   --qq-muted: #6f8394;
+  --qq-shell: #eaf3f9;
+  --qq-workspace: #f5f7f9;
+  --qq-panel: #ffffff;
+  --qq-utility-chrome: #f3f6f8;
+  --qq-message-assistant: #ffffff;
+  --qq-message-user: #dff1ff;
+  --qq-divider: #d7e1e8;
+  --qq-focus: #2879bd;
+  --qq-motion-fast: 140ms;
   --color-background-surface: var(--qq-paper) !important;
   --color-background-panel: var(--qq-blue-050) !important;
   --color-background-button-primary: var(--qq-blue-600) !important;
@@ -64,7 +73,7 @@ function buildVariantCss(id, heroDataUrl) {
   --color-token-disabled-foreground: #8ea1b0 !important;
   --color-token-dropdown-background: #f8fbfe !important;
   --color-token-dropdown-foreground: var(--qq-ink) !important;
-  --color-token-editor-background: #f8fbfe !important;
+  --color-token-editor-background: var(--qq-panel) !important;
   --color-token-editor-find-match-background: #bcdcf2 !important;
   --color-token-editor-find-match-highlight-background: #dcecf8 !important;
   --color-token-editor-foreground: var(--qq-ink) !important;
@@ -98,7 +107,7 @@ function buildVariantCss(id, heroDataUrl) {
   --color-token-scrollbar-slider-active-background: #689abb !important;
   --color-token-scrollbar-slider-background: #a7c5d9 !important;
   --color-token-scrollbar-slider-hover-background: #83abc6 !important;
-  --color-token-side-bar-background: #e7f3fb !important;
+  --color-token-side-bar-background: var(--qq-shell) !important;
   --color-token-terminal-background: #fff !important;
   --color-token-terminal-border: var(--qq-blue-200) !important;
   --color-token-terminal-foreground: var(--qq-ink) !important;
@@ -651,23 +660,23 @@ function buildVariantCss(id, heroDataUrl) {
 }
 
 :root[data-codex-themes-skin="xp-qq"] .app-shell-left-panel button[data-app-action-sidebar-section-toggle]::after {
-  content: "最近会话";
+  content: attr(data-codex-themes-section-label);
   color: #647d91;
   font: 600 11px/1 Tahoma, "Microsoft YaHei", sans-serif;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact-group"] {
   position: relative !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  margin: 5px 7px 1px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  margin: 4px 7px 1px !important;
   padding: 0 26px 0 19px !important;
   color: #61798c !important;
   border: 0 !important;
   border-top: 1px solid #c7d9e6 !important;
   border-radius: 0 !important;
   background: transparent !important;
-  font: 600 11px/27px Tahoma, "Microsoft YaHei", sans-serif !important;
+  font: 600 11px/25px Tahoma, "Microsoft YaHei", sans-serif !important;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact-group"]::before {
@@ -676,7 +685,7 @@ function buildVariantCss(id, heroDataUrl) {
   left: 6px;
   content: "▾";
   color: #688399;
-  font: 10px/27px Tahoma, sans-serif;
+  font: 10px/25px Tahoma, sans-serif;
   pointer-events: none;
 }
 
@@ -690,7 +699,7 @@ function buildVariantCss(id, heroDataUrl) {
   right: 7px;
   content: attr(data-codex-themes-contact-count);
   color: #8a9cab;
-  font: 10px/26px Tahoma, sans-serif;
+  font: 10px/24px Tahoma, sans-serif;
   pointer-events: none;
 }
 
@@ -711,17 +720,17 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact"] {
   position: relative !important;
   box-sizing: border-box !important;
-  width: calc(100% - 14px) !important;
-  height: 54px !important;
-  min-height: 54px !important;
-  margin: 1px 7px !important;
-  padding: 0 7px 0 54px !important;
+  width: calc(100% - 12px) !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  margin: 1px 6px !important;
+  padding: 0 7px 0 51px !important;
   overflow: hidden !important;
   color: #29475f !important;
   border: 1px solid transparent !important;
   border-radius: 4px !important;
   background: transparent !important;
-  transition: color 100ms ease, background-color 100ms ease, border-color 100ms ease, box-shadow 100ms ease;
+  transition: color var(--qq-motion-fast) ease, background-color var(--qq-motion-fast) ease, border-color var(--qq-motion-fast) ease, box-shadow var(--qq-motion-fast) ease;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact"]::before {
@@ -730,8 +739,8 @@ function buildVariantCss(id, heroDataUrl) {
   top: 8px;
   left: 9px;
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   box-sizing: border-box;
   place-items: center;
   content: attr(data-codex-themes-contact-initial);
@@ -748,9 +757,9 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact"]::after {
   position: absolute;
   z-index: 1;
-  top: 30px;
+  top: 27px;
   right: 52px;
-  left: 54px;
+  left: 51px;
   overflow: hidden;
   content: attr(data-codex-themes-contact-status);
   color: #7c8f9e;
@@ -763,9 +772,9 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact"] [data-thread-title-trigger] {
   position: absolute !important;
   z-index: 2 !important;
-  top: 7px !important;
+  top: 5px !important;
   right: 52px !important;
-  left: 54px !important;
+  left: 51px !important;
   display: flex !important;
   width: auto !important;
   height: 20px !important;
@@ -796,8 +805,8 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact-presence"] {
   position: absolute;
   z-index: 4;
-  top: 36px;
-  left: 38px;
+  top: 33px;
+  left: 36px;
   display: block;
   width: 8px;
   height: 8px;
@@ -860,7 +869,7 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] .main-surface,
 :root[data-codex-themes-skin="xp-qq"] .browser-main-surface {
   position: relative;
-  background: #f8fbfd !important;
+  background: var(--qq-workspace) !important;
 }
 
 /* A visible QQ contact header between the title bar and conversation. */
@@ -868,7 +877,7 @@ function buildVariantCss(id, heroDataUrl) {
   position: absolute;
   z-index: 24;
   top: 46px;
-  right: var(--codex-themes-xp-qq-file-panel-inset, 316px);
+  right: 0;
   left: 0;
   height: 62px;
   padding: 10px 16px 0 66px;
@@ -957,7 +966,7 @@ function buildVariantCss(id, heroDataUrl) {
 :root[data-codex-themes-skin="xp-qq"] diffs-container {
   color-scheme: light !important;
   color: #20364a !important;
-  background-color: #ffffff !important;
+  background-color: var(--qq-panel) !important;
   --diffs-bg: #ffffff !important;
   --diffs-fg: #20364a !important;
   --diffs-dark: #20364a !important;
@@ -1032,7 +1041,7 @@ function buildVariantCss(id, heroDataUrl) {
 
 :root[data-codex-themes-skin="xp-qq"] [role="tabpanel"][data-app-shell-tab-panel-controller="right"][data-tab-id^="file:"] {
   color: #29475f !important;
-  background: #f7fbfe !important;
+  background: var(--qq-panel) !important;
 }
 
 :root[data-codex-themes-skin="xp-qq"] [role="tabpanel"][data-app-shell-tab-panel-controller="right"][data-tab-id^="file:"] > nav[aria-label="文件路径"] {
@@ -1292,7 +1301,7 @@ function buildVariantCss(id, heroDataUrl) {
   color: #18364f !important;
   border: 1px solid #9fc3de !important;
   border-radius: 5px 5px 2px 5px !important;
-  background: #dff1ff !important;
+  background: var(--qq-message-user) !important;
   box-shadow: 0 1px 2px rgba(38, 83, 117, .12) !important;
 }
 
@@ -1351,7 +1360,7 @@ function buildVariantCss(id, heroDataUrl) {
   color: var(--qq-ink) !important;
   border: 1px solid #c3d6e5;
   border-radius: 5px 5px 5px 2px;
-  background: #fff;
+  background: var(--qq-message-assistant);
   box-shadow: 0 1px 2px rgba(44, 78, 103, .08);
 }
 
@@ -1372,6 +1381,8 @@ function buildVariantCss(id, heroDataUrl) {
   width: 100% !important;
   max-width: 100% !important;
   overflow-x: auto !important;
+  overscroll-behavior-inline: contain !important;
+  scrollbar-gutter: stable;
   justify-content: flex-start !important;
 }
 
@@ -1451,6 +1462,195 @@ function buildVariantCss(id, heroDataUrl) {
   border-color: #b6ccdc !important;
   background: linear-gradient(180deg, #edf4f9, #dbe8f1) !important;
   box-shadow: inset 0 1px #fff !important;
+}
+
+/* Phase-two polish: keep the QQ shell expressive while document surfaces stay
+ * calm, readable and independent from Codex's internal wrapper depth. */
+:root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"]:not([data-local-conversation-final-assistant]) {
+  margin-left: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] main [class*="conversation-item-gap"]:not([data-local-conversation-final-assistant])::before {
+  display: none !important;
+  content: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] {
+  padding: 15px 18px !important;
+  border-color: var(--qq-divider) !important;
+  background: var(--qq-message-assistant) !important;
+  box-shadow: 0 1px 2px rgba(31, 58, 80, .07) !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] {
+  min-width: 0 !important;
+  color: var(--qq-ink) !important;
+  font-size: 15px !important;
+  line-height: 1.72 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(p, li) {
+  color: var(--qq-ink) !important;
+  font-size: 15px !important;
+  line-height: 1.72 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(h1) {
+  margin: 18px 0 10px !important;
+  color: #1e5f94 !important;
+  font-size: 23px !important;
+  font-weight: 700 !important;
+  line-height: 1.32 !important;
+  letter-spacing: -.01em !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(h2) {
+  margin: 17px 0 8px !important;
+  color: #244761 !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  line-height: 1.38 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(h3, h4) {
+  margin: 15px 0 7px !important;
+  color: #29475f !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.42 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(ul, ol) {
+  margin-block: 8px !important;
+  padding-inline-start: 22px !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(pre, blockquote) {
+  max-width: 100% !important;
+  overflow: auto !important;
+  border-color: var(--qq-divider) !important;
+  background: #f4f6f8 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(code:not(pre code)) {
+  color: #244761 !important;
+  background: #edf1f4 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] table {
+  width: max-content !important;
+  min-width: 100% !important;
+  color: var(--qq-ink) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] :where(th, td) {
+  padding: 8px 10px !important;
+  border-color: var(--qq-divider) !important;
+  vertical-align: top !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-local-conversation-final-assistant] [data-content-search-unit-key] th {
+  color: #29475f !important;
+  background: #f1f4f6 !important;
+  font-weight: 700 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"]:has([data-settings-panel-slug]) main.main-surface {
+  background: #f7f8fa !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"]:has([data-settings-panel-slug]) main.main-surface::before,
+:root[data-codex-themes-skin="xp-qq"]:has([data-settings-panel-slug]) main.main-surface::after {
+  display: none !important;
+  content: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"]:has([data-settings-panel-slug]) main.main-surface > header + div {
+  padding-top: 0 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"]:has([data-settings-panel-slug]) [class*="rounded-2xl"][class*="border-token-border"] {
+  border-color: var(--qq-divider) !important;
+  background: var(--qq-panel) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 2px rgba(31, 58, 80, .05) !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"]:has([data-settings-panel-slug]) main.main-surface :where(input, textarea, select, [role="switch"]) {
+  color-scheme: light !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] .isolate:has(> [role="tabpanel"][data-app-shell-tab-panel-controller="right"]) {
+  background: var(--qq-utility-chrome) !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role]:focus-visible,
+:root[data-codex-themes-skin="xp-qq"] #codex-themes-skin-menu button:focus-visible,
+:root[data-codex-themes-skin="xp-qq"] [data-codex-themes-role="xp-qq-contact"]:focus-within {
+  outline: 2px solid var(--qq-focus) !important;
+  outline-offset: 2px !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] #codex-themes-xp-qq-avatar-editor::after {
+  position: absolute;
+  z-index: 15;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  content: "";
+  border: 2px solid #f4fbff;
+  border-radius: 50%;
+  background: #2ea866;
+  box-shadow: 0 0 0 1px rgba(22, 98, 58, .16);
+  pointer-events: none;
+}
+
+/* If a future Codex build removes one of the three audited shell anchors,
+ * preserve the native controls and disable only layout-owning decorations. */
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] #codex-themes-xp-qq-profile,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] #codex-themes-xp-qq-profile-panel,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] #codex-themes-xp-qq-avatar-editor,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] #codex-themes-xp-qq-sidebar-actions,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] #codex-themes-xp-qq-mode-switch {
+  display: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] [data-codex-themes-native-action-hidden="true"] {
+  display: revert !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] .app-shell-left-panel::before,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] main.main-surface::before,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] main.main-surface::after {
+  display: none !important;
+  content: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] .app-shell-left-panel > .max-w-full,
+:root[data-codex-themes-skin="xp-qq"][data-codex-themes-xp-qq-compatibility="fallback"] main.main-surface > header + div {
+  padding-top: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-codex-themes-skin="xp-qq"] *,
+  :root[data-codex-themes-skin="xp-qq"] *::before,
+  :root[data-codex-themes-skin="xp-qq"] *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 :root[data-codex-themes-skin="xp-qq"] button {

@@ -326,9 +326,101 @@ export function buildSkinMenuScript({
   });
   let clearXpQqWelcomeRoles = () => {};
   let clearXpQqUserNames = () => {};
+  let syncXpQqUserNames = () => {};
   let clearXpQqContacts = () => {};
   let clearXpQqModeSwitch = () => {};
   let restoreXpQqSidebarActions = () => {};
+  const compatibilityClassAttribute = "data-codex-themes-xp-qq-compat-class";
+  const clearXpQqCompatibilityClasses = () => {
+    for (const node of document.querySelectorAll("[" + compatibilityClassAttribute + "]")) {
+      const classNames = (node.getAttribute(compatibilityClassAttribute) ?? "")
+        .split(" ")
+        .filter(Boolean);
+      for (const className of classNames) node.classList.remove(className);
+      node.removeAttribute(compatibilityClassAttribute);
+    }
+  };
+  const addXpQqCompatibilityClass = (node, className) => {
+    if (!node || node.classList.contains(className)) return node;
+    const classNames = new Set(
+      (node.getAttribute(compatibilityClassAttribute) ?? "").split(" ").filter(Boolean),
+    );
+    classNames.add(className);
+    node.setAttribute(compatibilityClassAttribute, [...classNames].join(" "));
+    node.classList.add(className);
+    return node;
+  };
+  const removeXpQqCompatibilityClass = (node, className) => {
+    if (!node) return;
+    const classNames = new Set(
+      (node.getAttribute(compatibilityClassAttribute) ?? "").split(" ").filter(Boolean),
+    );
+    if (!classNames.delete(className)) return;
+    node.classList.remove(className);
+    if (classNames.size > 0) {
+      node.setAttribute(compatibilityClassAttribute, [...classNames].join(" "));
+    } else {
+      node.removeAttribute(compatibilityClassAttribute);
+    }
+  };
+  const xpQqCompatibilityReady = () => (
+    document.documentElement.dataset.codexThemesXpQqCompatibility === "ready"
+  );
+  const syncXpQqCompatibility = () => {
+    if (!isCurrent()) return false;
+    const active = document.documentElement.dataset.codexThemesSkin === "xp-qq";
+    if (!active) {
+      clearXpQqCompatibilityClasses();
+      delete document.documentElement.dataset.codexThemesXpQqCompatibility;
+      return false;
+    }
+    const navigation = document.querySelector('nav[role="navigation"]');
+    const leftPanel = document.querySelector(".app-shell-left-panel")
+      ?? navigation?.closest("aside")
+      ?? null;
+    addXpQqCompatibilityClass(leftPanel, "app-shell-left-panel");
+
+    const mainCandidates = [...document.querySelectorAll("main")]
+      .filter((candidate) => (
+        !leftPanel?.contains(candidate)
+        && !candidate.contains(leftPanel)
+        && candidate.getClientRects().length > 0
+      ))
+      .sort((left, right) => {
+        const leftRect = left.getBoundingClientRect();
+        const rightRect = right.getBoundingClientRect();
+        return (rightRect.width * rightRect.height) - (leftRect.width * leftRect.height);
+      });
+    const mainSurface = mainCandidates.find((candidate) => candidate.classList.contains("main-surface"))
+      ?? mainCandidates.find((candidate) => candidate.querySelector(
+        "[data-local-conversation-final-assistant], [data-content-search-unit-key]",
+      ))
+      ?? mainCandidates[0]
+      ?? null;
+    for (const staleMain of document.querySelectorAll(
+      "[" + compatibilityClassAttribute + '~="main-surface"]',
+    )) {
+      if (staleMain !== mainSurface) removeXpQqCompatibilityClass(staleMain, "main-surface");
+    }
+    addXpQqCompatibilityClass(mainSurface, "main-surface");
+
+    const topHeaders = [
+      leftPanel?.querySelector(":scope > header") ?? null,
+      mainSurface?.querySelector(":scope > header") ?? null,
+    ].filter(Boolean);
+    for (const staleHeader of document.querySelectorAll(
+      "[" + compatibilityClassAttribute + '~="app-header-tint"]',
+    )) {
+      if (!topHeaders.includes(staleHeader)) {
+        removeXpQqCompatibilityClass(staleHeader, "app-header-tint");
+      }
+    }
+    for (const header of topHeaders) addXpQqCompatibilityClass(header, "app-header-tint");
+
+    const ready = Boolean(leftPanel && mainSurface && topHeaders.length > 0);
+    document.documentElement.dataset.codexThemesXpQqCompatibility = ready ? "ready" : "fallback";
+    return ready;
+  };
   let disposed = false;
   let runtime;
   const dispose = () => {
@@ -359,6 +451,7 @@ export function buildSkinMenuScript({
       try { shadowStyle.remove(); } catch {}
     }
     trackedDiffShadowStyles.clear();
+    clearXpQqCompatibilityClasses();
     clearXpQqWelcomeRoles();
     clearXpQqUserNames();
     clearXpQqContacts();
@@ -383,6 +476,7 @@ export function buildSkinMenuScript({
     if (ownedFileTitle?.dataset.codexThemesGeneration === generation) ownedFileTitle.remove();
     document.documentElement.style.removeProperty("--codex-themes-xp-qq-avatar-image");
     delete document.documentElement.dataset.codexThemesXpQqAvatar;
+    delete document.documentElement.dataset.codexThemesXpQqCompatibility;
     if (window.__codexThemesSkinRuntime === runtime) {
       delete document.documentElement.dataset.codexThemesSkin;
       try { delete window.__codexThemesSkin; } catch { window.__codexThemesSkin = undefined; }
@@ -539,6 +633,8 @@ export function buildSkinMenuScript({
     if (!theme) return;
     style.textContent = theme.css;
     document.documentElement.dataset.codexThemesSkin = theme.id;
+    syncXpQqCompatibility();
+    syncXpQqUserNames();
     syncThemeMenuAnchor();
     syncXpQqDiffShadows();
     paint(theme.id);
@@ -552,6 +648,7 @@ export function buildSkinMenuScript({
     // restored native navigation, and can strand them if React replaces the
     // observed subtree during that render.
     restoreXpQqSidebarActions();
+    clearXpQqCompatibilityClasses();
     style.textContent = "";
     delete document.documentElement.dataset.codexThemesSkin;
     syncThemeMenuAnchor();
@@ -1053,7 +1150,6 @@ export function buildSkinMenuScript({
   );
 
   let currentXpQqProfile = { ...data.profile.defaults };
-  let syncXpQqUserNames = () => {};
   const closeProfileEditor = ({ restoreFocus = false } = {}) => {
     if (profilePanel.hidden) return;
     profilePanel.hidden = true;
@@ -1340,7 +1436,8 @@ export function buildSkinMenuScript({
   const syncXpQqSidebarActions = () => {
     if (!isCurrent()) return;
     const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
-    if (!xpQqActive) {
+    syncXpQqCompatibility();
+    if (!xpQqActive || !xpQqCompatibilityReady()) {
       restoreXpQqSidebarActions();
       return;
     }
@@ -1435,6 +1532,7 @@ export function buildSkinMenuScript({
       delete node.dataset.codexThemesContactStatus;
       delete node.dataset.codexThemesContactState;
       delete node.dataset.codexThemesContactCount;
+      delete node.dataset.codexThemesSectionLabel;
     }
   };
   const setContactData = (node, key, value) => {
@@ -1445,12 +1543,27 @@ export function buildSkinMenuScript({
     const suffix = "中的已安排任务";
     return label.endsWith(suffix) ? label.slice(0, -suffix.length) : "本地工作区";
   };
+  const xpQqSectionLabel = (text) => {
+    const normalized = String(text ?? "").replace(/[\\r\\n\\t]+/g, " ").trim();
+    if (normalized === "置顶") return "置顶会话";
+    if (normalized === "项目") return "项目分组";
+    if (normalized === "最近") return "最近会话";
+    return normalized.slice(0, 16) || "会话";
+  };
   const syncXpQqContacts = () => {
     if (!isCurrent()) return;
     const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
-    if (!xpQqActive) {
+    syncXpQqCompatibility();
+    if (!xpQqActive || !xpQqCompatibilityReady()) {
       clearXpQqContacts();
       return;
+    }
+
+    for (const heading of document.querySelectorAll(
+      "button[data-app-action-sidebar-section-toggle]",
+    )) {
+      setContactData(heading, "codexThemesContactGeneration", generation);
+      setContactData(heading, "codexThemesSectionLabel", xpQqSectionLabel(heading.textContent));
     }
 
     const projectLists = [...document.querySelectorAll(
@@ -1518,6 +1631,16 @@ export function buildSkinMenuScript({
   });
   trackedObservers.add(contactObserver);
 
+  syncXpQqCompatibility();
+  const compatibilityObserver = new MutationObserver(syncXpQqCompatibility);
+  compatibilityObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-codex-themes-skin"],
+    childList: true,
+    subtree: true,
+  });
+  trackedObservers.add(compatibilityObserver);
+
   const fileTitle = document.createElement("div");
   fileTitle.id = data.fileTitleId;
   fileTitle.dataset.codexThemesGeneration = generation;
@@ -1528,7 +1651,6 @@ export function buildSkinMenuScript({
   document.body.appendChild(fileTitle);
 
   let rightPanelToolbar = null;
-  let fileSurfaceMain = null;
   let fileTitleResizeObserver = null;
   const syncXpQqFileTitle = () => {
     if (!isCurrent()) return;
@@ -1541,20 +1663,7 @@ export function buildSkinMenuScript({
       rightPanelToolbar = nextToolbar;
       if (rightPanelToolbar) fileTitleResizeObserver?.observe(rightPanelToolbar);
     }
-    const nextMain = rightPanelToolbar?.closest("main.main-surface") ?? null;
-    if (nextMain !== fileSurfaceMain) {
-      fileSurfaceMain?.style.removeProperty("--codex-themes-xp-qq-file-panel-inset");
-      fileSurfaceMain = nextMain;
-    }
     const xpQqActive = document.documentElement.dataset.codexThemesSkin === "xp-qq";
-    if (xpQqActive && rightPanelToolbar && fileSurfaceMain) {
-      const mainRect = fileSurfaceMain.getBoundingClientRect();
-      const panelRect = rightPanelToolbar.parentElement.getBoundingClientRect();
-      const panelInset = Math.max(0, Math.round(mainRect.right - panelRect.left));
-      fileSurfaceMain.style.setProperty("--codex-themes-xp-qq-file-panel-inset", panelInset + "px");
-    } else {
-      fileSurfaceMain?.style.removeProperty("--codex-themes-xp-qq-file-panel-inset");
-    }
     const fileToolbar = nextRightPanel?.matches('[data-tab-id^="file:"]')
       ? rightPanelToolbar
       : null;

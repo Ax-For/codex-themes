@@ -27,8 +27,9 @@ test("XP QQ CSS provides stable file and terminal chrome", () => {
   );
   assert.match(
     css,
-    /main\.main-surface::before \{[^}]*right: var\(--codex-themes-xp-qq-file-panel-inset, 316px\);/s,
+    /main\.main-surface::before \{[^}]*right: 0;[^}]*border-bottom: 1px solid #abc5d9;/s,
   );
+  assert.doesNotMatch(css, /right: var\(--codex-themes-xp-qq-file-panel-inset/);
   assert.match(css, /\[data-app-shell-tab-controller="right"\]/);
   assert.match(css, /\[role="tab"\]\[aria-selected="true"\]/);
   assert.doesNotMatch(css, /\[role="tabpanel"\]\[aria-label="打开文件"\]/);
@@ -162,6 +163,99 @@ test("XP QQ CSS keeps wide Markdown tables inside assistant message bubbles", ()
   );
 });
 
+test("XP QQ CSS gives long assistant Markdown a restrained readable type scale", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /--qq-workspace: #f5f7f9;/);
+  assert.match(css, /--qq-message-assistant: #ffffff;/);
+  assert.match(css, /--qq-message-user: #dff1ff;/);
+  assert.match(
+    css,
+    /\[data-local-conversation-final-assistant\] \[data-content-search-unit-key\] :where\(p, li\) \{[^}]*font-size: 15px !important;[^}]*line-height: 1\.72 !important;/s,
+  );
+  assert.match(
+    css,
+    /\[data-local-conversation-final-assistant\] \[data-content-search-unit-key\] :where\(h1\) \{[^}]*font-size: 23px !important;[^}]*line-height: 1\.32 !important;/s,
+  );
+  assert.match(
+    css,
+    /main \[class\*="conversation-item-gap"\]:not\(\[data-local-conversation-final-assistant\]\) \{[^}]*border: 0 !important;[^}]*background: transparent !important;[^}]*box-shadow: none !important;/s,
+  );
+});
+
+test("XP QQ CSS isolates document, file, diff, settings and terminal surfaces", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /--qq-utility-chrome: #f3f6f8;/);
+  assert.match(
+    css,
+    /\.main-surface,\n:root\[data-codex-themes-skin="xp-qq"\] \.browser-main-surface \{[^}]*background: var\(--qq-workspace\) !important;/s,
+  );
+  assert.match(
+    css,
+    /:has\(\[data-settings-panel-slug\]\) main\.main-surface \{[^}]*background: #f7f8fa !important;/s,
+  );
+  assert.match(
+    css,
+    /:has\(\[data-settings-panel-slug\]\) main\.main-surface::before,[\s\S]*display: none !important;/s,
+  );
+  assert.match(
+    css,
+    /:has\(\[data-settings-panel-slug\]\) \[class\*="rounded-2xl"\]\[class\*="border-token-border"\] \{[^}]*background: var\(--qq-panel\) !important;[^}]*border-radius: 8px !important;/s,
+  );
+  assert.match(
+    css,
+    /\[data-tab-id\^="file:"\] \{[^}]*background: var\(--qq-panel\) !important;/s,
+  );
+  assert.match(css, /diffs-container \{[^}]*background-color: var\(--qq-panel\) !important;/s);
+  assert.match(css, /\[id\^="terminal-panel-"\][\s\S]*background-color: #10283c !important/);
+});
+
+test("XP QQ CSS styles Markdown tables as local neutral scrollers", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(
+    css,
+    /\[class\*="_tableScroller_"\] \{[^}]*overscroll-behavior-inline: contain !important;[^}]*scrollbar-gutter: stable;/s,
+  );
+  assert.match(
+    css,
+    /\[data-content-search-unit-key\] table \{[^}]*font-size: 13px !important;[^}]*line-height: 1\.5 !important;/s,
+  );
+  assert.match(
+    css,
+    /\[data-content-search-unit-key\] th \{[^}]*background: #f1f4f6 !important;/s,
+  );
+});
+
+test("XP QQ CSS exposes keyboard focus, reduced motion and a safe DOM fallback", () => {
+  const css = buildSkinCss({
+    theme: { id: "xp-qq", colors: {} },
+    heroDataUrl: PIXEL,
+  });
+
+  assert.match(css, /\[data-codex-themes-role\]:focus-visible/);
+  assert.match(css, /outline: 2px solid var\(--qq-focus\) !important/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(
+    css,
+    /\[data-codex-themes-xp-qq-compatibility="fallback"\] #codex-themes-xp-qq-profile[\s\S]*display: none !important/s,
+  );
+  assert.match(
+    css,
+    /\[data-codex-themes-xp-qq-compatibility="fallback"\] \[data-codex-themes-native-action-hidden="true"\] \{[^}]*display: revert !important;/s,
+  );
+});
+
 test("XP QQ CSS presents an editable compact identity profile", () => {
   const css = buildSkinCss({
     theme: { id: "xp-qq", colors: {} },
@@ -205,17 +299,17 @@ test("XP QQ CSS presents projects and threads as a recent-contact list", () => {
     heroDataUrl: PIXEL,
   });
 
-  assert.match(css, /button\[data-app-action-sidebar-section-toggle\]::after \{[^}]*content: "最近会话"/s);
-  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] \{[^}]*height: 28px !important/s);
+  assert.match(css, /button\[data-app-action-sidebar-section-toggle\]::after \{[^}]*content: attr\(data-codex-themes-section-label\)/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] \{[^}]*height: 26px !important/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] \{[^}]*background: transparent !important/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\]::before \{[^}]*content: "▾"/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\] > div:first-child > \[data-sidebar-project-drop-zone\] \{[^}]*display: none !important/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact-group"\]::after \{[^}]*content: attr\(data-codex-themes-contact-count\)/s);
-  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*height: 54px !important/s);
-  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*margin: 1px 7px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*height: 50px !important/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*margin: 1px 6px !important/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \{[^}]*border-radius: 4px !important/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*content: attr\(data-codex-themes-contact-initial\)/s);
-  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*width: 36px/s);
+  assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*width: 34px/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::before \{[^}]*border-radius: 8px/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\]::after \{[^}]*content: attr\(data-codex-themes-contact-status\)/s);
   assert.match(css, /\[data-codex-themes-role="xp-qq-contact"\] \[data-thread-title-trigger\] \{[^}]*position: absolute !important/s);

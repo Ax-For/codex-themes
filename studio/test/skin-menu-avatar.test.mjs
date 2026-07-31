@@ -188,8 +188,8 @@ test("generated skin menu installs the XP QQ runtime helpers", () => {
     /main\.main-surface aside \[role="tabpanel"\]\[data-app-shell-tab-panel-controller="right"\]/,
   );
   assert.match(script, /matches\('\[data-tab-id\^="file:"\]'\)/);
-  assert.match(script, /--codex-themes-xp-qq-file-panel-inset/);
-  assert.match(script, /mainRect\.right - panelRect\.left/);
+  assert.doesNotMatch(script, /--codex-themes-xp-qq-file-panel-inset/);
+  assert.doesNotMatch(script, /mainRect\.right - panelRect\.left/);
   assert.match(script, /syncXpQqWelcome/);
   assert.match(script, /dataset\.codexThemesSkin/);
   assert.doesNotMatch(script, /codexThemesCodexSkin/);
@@ -257,6 +257,46 @@ test("XP QQ mode switching never reparents React-owned navigation nodes", () => 
   assert.match(script, /data-codex-themes-native-action-hidden/);
 });
 
+test("XP QQ runtime preserves distinct native sidebar section meanings", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  assert.match(script, /const xpQqSectionLabel = \(text\) =>/);
+  assert.match(script, /if \(normalized === "置顶"\) return "置顶会话"/);
+  assert.match(script, /if \(normalized === "项目"\) return "项目分组"/);
+  assert.match(script, /if \(normalized === "最近"\) return "最近会话"/);
+  assert.match(script, /codexThemesSectionLabel/);
+  assert.match(script, /delete node\.dataset\.codexThemesSectionLabel/);
+});
+
+test("XP QQ runtime marks compatibility and falls back before hiding native controls", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  assert.match(script, /const syncXpQqCompatibility = \(\) =>/);
+  assert.match(script, /codexThemesXpQqCompatibility/);
+  assert.match(script, /"app-header-tint"/);
+  assert.match(script, /\.app-shell-left-panel/);
+  assert.match(script, /main\.main-surface/);
+  assert.match(script, /nav\[role="navigation"\]/);
+  assert.match(script, /addXpQqCompatibilityClass\(header, "app-header-tint"\)/);
+  assert.match(script, /addXpQqCompatibilityClass\(mainSurface, "main-surface"\)/);
+  assert.match(script, /!candidate\.contains\(leftPanel\)/);
+  assert.match(script, /removeXpQqCompatibilityClass/);
+  assert.match(script, /data-codex-themes-xp-qq-compat-class/);
+  assert.match(script, /clearXpQqCompatibilityClasses/);
+  assert.match(script, /xpQqCompatibilityReady\(\)/);
+  assert.match(script, /delete document\.documentElement\.dataset\.codexThemesXpQqCompatibility/);
+});
+
 test("theme switch stays at one sidebar anchor and uses a vector appearance icon", () => {
   const script = buildSkinMenuScript({
     entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
@@ -292,6 +332,7 @@ test("switching to the native theme removes XP QQ sidebar ownership", () => {
 
   const clearThemeSource = script.slice(clearThemeStart, clearThemeEnd);
   assert.match(clearThemeSource, /restoreXpQqSidebarActions\(\)/);
+  assert.match(clearThemeSource, /clearXpQqCompatibilityClasses\(\)/);
 
   const restoreStart = script.lastIndexOf("restoreXpQqSidebarActions =");
   const restoreEnd = script.indexOf("const syncXpQqSidebarActions", restoreStart);
@@ -301,4 +342,22 @@ test("switching to the native theme removes XP QQ sidebar ownership", () => {
   const restoreSource = script.slice(restoreStart, restoreEnd);
   assert.match(restoreSource, /querySelectorAll\(\"\[data-codex-themes-native-action-hidden\]\"\)/);
   assert.match(restoreSource, /querySelectorAll\('\[data-codex-themes-role="xp-qq-sidebar-actions"\]'\)/);
+});
+
+test("switching back to XP QQ immediately restores the profile instead of waiting for an observer", () => {
+  const script = buildSkinMenuScript({
+    entries: [{ id: "xp-qq", name: "Windows XP · QQ", accent: "#2879bd", css: ":root{}" }],
+    activeId: "xp-qq",
+    styleId: "skin-style",
+    menuId: "skin-menu",
+  });
+
+  const setThemeStart = script.indexOf("const setTheme =");
+  const setThemeEnd = script.indexOf("const clearTheme =", setThemeStart);
+  assert.notEqual(setThemeStart, -1);
+  assert.notEqual(setThemeEnd, -1);
+
+  const setThemeSource = script.slice(setThemeStart, setThemeEnd);
+  assert.match(setThemeSource, /syncXpQqUserNames\(\)/);
+  assert.match(setThemeSource, /syncXpQqCompatibility\(\)/);
 });
