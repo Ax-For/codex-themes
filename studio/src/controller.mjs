@@ -25,6 +25,7 @@ const RELAUNCH_BUDGET_RESET_MS = 5 * 60_000;
 const ACTIONS = new Set([
   "idle",
   "inject",
+  "launch",
   "repair",
   "wait-for-app",
   "relaunch",
@@ -288,6 +289,9 @@ function normalizedDependencies(input) {
     restartIntoCdp: input.restartIntoCdp === undefined
       ? null
       : requireFunction(input.restartIntoCdp, "restartIntoCdp"),
+    launchIntoCdp: input.launchIntoCdp === undefined
+      ? null
+      : requireFunction(input.launchIntoCdp, "launchIntoCdp"),
     validatePortOwner: requireFunction(input.validatePortOwner, "validatePortOwner"),
     inspectSkin: input.inspectSkin,
     validateThemeSelection: input.validateThemeSelection === undefined
@@ -563,17 +567,18 @@ export function createSkinController(input) {
     }
     return value;
   };
-  const relaunchNativeCodex = async (state) => {
-    if (!deps.backgroundProcess) return false;
-    if (deps.probeNativeProcess === null || deps.restartIntoCdp === null) return false;
+  const recoverCdpCodex = async (state) => {
+    if (!deps.backgroundProcess) return null;
+    if (deps.probeNativeProcess === null) return null;
     let native;
     try {
       native = normalizeProcessProbe(await deps.probeNativeProcess());
     } catch (error) {
       await safeLog(deps.logger, "warn", "native_probe_failed", error);
-      return false;
+      return null;
     }
-    if (native === null) return false;
+    const operation = native === null ? deps.launchIntoCdp : deps.restartIntoCdp;
+    if (operation === null) return null;
     const currentTime = relaunchClock();
     if (
       relaunchWindowStartedAt === null ||
@@ -585,18 +590,34 @@ export function createSkinController(input) {
     }
     if (
       relaunchAttempt !== null &&
-      sameProcessIdentity(relaunchAttempt.process, native) &&
+      (
+        (relaunchAttempt.process === null && native === null) ||
+        (
+          relaunchAttempt.process !== null &&
+          native !== null &&
+          sameProcessIdentity(relaunchAttempt.process, native)
+        )
+      ) &&
       currentTime - relaunchAttempt.attemptedAt < RELAUNCH_RETRY_DELAY_MS
-    ) return false;
-    if (relaunchFailures >= MAX_RELAUNCH_ATTEMPTS) return false;
+    ) return null;
+    if (relaunchFailures >= MAX_RELAUNCH_ATTEMPTS) return null;
     relaunchAttempt = { process: native, attemptedAt: currentTime };
     relaunchFailures += 1;
     try {
-      await deps.restartIntoCdp({ process: native, themeId: state.selectedThemeId });
-      return true;
+      const queued = await operation({
+        ...(native === null ? {} : { process: native }),
+        themeId: state.selectedThemeId,
+      });
+      if (queued?.queued === false) return null;
+      return native === null ? "launch" : "relaunch";
     } catch (error) {
-      await safeLog(deps.logger, "error", "relaunch_failed", error);
-      return false;
+      await safeLog(
+        deps.logger,
+        "error",
+        native === null ? "launch_failed" : "relaunch_failed",
+        error,
+      );
+      return null;
     }
   };
 
@@ -887,7 +908,8 @@ export function createSkinController(input) {
         session = nativeSession();
         await deps.writeSession(session, lease);
       }
-      if (await relaunchNativeCodex(state)) return result("relaunch", "native", state);
+      const recoveryAction = await recoverCdpCodex(state);
+      if (recoveryAction !== null) return result(recoveryAction, "native", state);
       return result("wait-for-app", "native", state);
     }
 

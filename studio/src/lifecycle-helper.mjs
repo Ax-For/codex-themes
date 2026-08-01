@@ -331,7 +331,7 @@ async function readActionFile(actionPath, options) {
   return action;
 }
 
-async function defaultReadProcessIdentity(pid, expected, { run = execFile } = {}) {
+export async function readLifecycleProcessIdentity(pid, expected, { run = execFile } = {}) {
   let stdout;
   try {
     ({ stdout } = await run("/bin/ps", ["-p", String(pid), "-o", "pid=,lstart=,command="]));
@@ -343,24 +343,37 @@ async function defaultReadProcessIdentity(pid, expected, { run = execFile } = {}
   const match = pattern.exec(stdout);
   if (!match || Number(match[1]) !== pid) return null;
   const command = match[3];
+  const startedAt = match[2].replace(/\s+/gu, " ");
   const executableMatches = command === expected.executablePath || command.startsWith(`${expected.executablePath} `);
   if (!executableMatches) {
-    return { pid, executablePath: command.split(" ")[0], startedAt: match[2] };
+    return { pid, executablePath: command.split(" ")[0], startedAt };
   }
-  return { pid, executablePath: expected.executablePath, startedAt: match[2] };
+  return { pid, executablePath: expected.executablePath, startedAt };
 }
 
-export async function requestNormalQuit({ process: identity }, { execFile: run = execFile } = {}) {
+export async function requestNormalQuit({ appPath, process: identity }, { execFile: run = execFile } = {}) {
   const target = processIdentity(identity);
+  absolutePath(appPath, "appPath");
+  if (target.executablePath !== join(appPath, "Contents", "MacOS", "ChatGPT")) {
+    throw new Error("退出目标不属于已解析的 Codex 应用");
+  }
   const source = `ObjC.import("AppKit");
 function run(argv) {
   const pid = Number(argv[0]);
   const app = $.NSRunningApplication.runningApplicationWithProcessIdentifier(pid);
   if (!app) throw new Error("target process disappeared");
-  if (!app.terminate) throw new Error("target process refused normal termination");
+  Application(argv[1]).quit();
   return true;
 }`;
-  await run("/usr/bin/osascript", ["-l", "JavaScript", "-e", source, "--", String(target.pid)]);
+  await run("/usr/bin/osascript", [
+    "-l",
+    "JavaScript",
+    "-e",
+    source,
+    "--",
+    String(target.pid),
+    appPath,
+  ]);
 }
 
 async function defaultLaunchApp({ appPath, args }) {
@@ -603,7 +616,7 @@ function defaultWait(milliseconds) {
 }
 
 async function executeLifecycleAction(action, deps = {}) {
-  const readProcessIdentity = deps.readProcessIdentity ?? defaultReadProcessIdentity;
+  const readProcessIdentity = deps.readProcessIdentity ?? readLifecycleProcessIdentity;
   const requestQuit = deps.requestQuit ?? requestNormalQuit;
   const launchApp = deps.launchApp ?? defaultLaunchApp;
   const wait = deps.wait ?? defaultWait;
@@ -724,13 +737,19 @@ export async function spawnDetachedLifecycle({
   nodePath,
   helperPath,
   actionPath,
+  showFailureDialog = true,
   spawnImpl = spawn,
 } = {}) {
   absolutePath(nodePath, "nodePath");
   absolutePath(helperPath, "helperPath");
   absolutePath(actionPath, "actionPath");
+  if (typeof showFailureDialog !== "boolean") {
+    throw new TypeError("showFailureDialog 必须是布尔值");
+  }
   if (typeof spawnImpl !== "function") throw new TypeError("spawnImpl 必须是函数");
-  const child = spawnImpl(nodePath, [helperPath, actionPath], {
+  const args = [helperPath, actionPath];
+  if (!showFailureDialog) args.push("--no-dialog");
+  const child = spawnImpl(nodePath, args, {
     detached: true,
     stdio: "ignore",
   });
@@ -791,11 +810,15 @@ function isMainEntry() {
 }
 
 if (isMainEntry()) {
-  if (process.argv.length !== 3) {
-    process.stderr.write("用法：lifecycle-helper.mjs /absolute/path/to/action.json\n");
+  const actionPath = process.argv[2];
+  const noDialog = process.argv.length === 4 && process.argv[3] === "--no-dialog";
+  if (!actionPath || (process.argv.length !== 3 && !noDialog)) {
+    process.stderr.write(
+      "用法：lifecycle-helper.mjs /absolute/path/to/action.json [--no-dialog]\n",
+    );
     process.exitCode = 64;
   } else {
-    runLifecycleMain(process.argv[2]).catch((error) => {
+    runLifecycleMain(actionPath, noDialog ? { showDialog: async () => {} } : {}).catch((error) => {
       const failure = safeLifecycleFailure(error);
       process.stderr.write(`CodexThemes lifecycle helper [${failure.code}]：${failure.message}\n`);
       process.exitCode = 1;

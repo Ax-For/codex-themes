@@ -903,6 +903,45 @@ export function controllerInjectionPreference({ ephemeral = false, preferStored 
   return preferStored ?? !ephemeral;
 }
 
+export async function launchMacCodexWithCdp({
+  app,
+  port,
+  listProcesses = listCodexProcesses,
+  run = execFile,
+} = {}) {
+  if (
+    app === null ||
+    typeof app !== "object" ||
+    typeof app.appPath !== "string" ||
+    !isAbsolute(app.appPath) ||
+    normalize(app.appPath) !== app.appPath ||
+    !app.appPath.endsWith(".app") ||
+    app.executablePath !== join(app.appPath, "Contents", "MacOS", "ChatGPT")
+  ) {
+    throw new TypeError("Codex 应用身份无效");
+  }
+  if (!Number.isInteger(port) || port < 1024 || port > 65_535) {
+    throw new TypeError("CDP 端口必须是 1024 到 65535 之间的整数");
+  }
+  if (typeof listProcesses !== "function" || typeof run !== "function") {
+    throw new TypeError("macOS CDP 预启动依赖无效");
+  }
+  const running = await listProcesses({ app });
+  if (!Array.isArray(running)) throw new Error("Codex 进程查询结果无效");
+  if (running.length > 0) return { queued: false, reason: "already-running" };
+
+  // 不使用 -n：若 Codex 的登录项恰好赢得竞态，open 会复用现有实例，
+  // 而不是创建第二个 Codex。控制器下一轮会安全接管那个原生进程。
+  await run("/usr/bin/open", [
+    "-a",
+    app.appPath,
+    "--args",
+    "--remote-debugging-address=127.0.0.1",
+    `--remote-debugging-port=${port}`,
+  ]);
+  return { queued: true };
+}
+
 function windowsPowerShellPath(env = process.env) {
   return trustedWindowsPowerShellPath(env);
 }
@@ -1120,6 +1159,10 @@ export async function productionController({
     // Windows 的重启必须走 scripts/windows 包装器，这条直连生命周期路径只在 macOS 成立。
     ...(platform === "darwin"
       ? {
+        launchIntoCdp: async () => {
+          const app = await resolveCodexApp({ platform });
+          return launchMacCodexWithCdp({ app, port });
+        },
         probeNativeProcess: probeNative,
         restartIntoCdp: async ({ process: nativeProcess }) => {
           const app = await resolveCodexApp({ platform });
@@ -1134,6 +1177,9 @@ export async function productionController({
             launchMode: "cdp",
             port,
             platform,
+            // 登录恢复可能撞上仍在执行任务的 Codex。后台控制器会按预算重试，
+            // 这类暂时无法正常退出的情况不应弹出模态错误打断用户。
+            showFailureDialog: false,
           });
         },
       }
@@ -1476,6 +1522,7 @@ async function productionRestartDetached({
   launchMode,
   port,
   afterLaunch = null,
+  showFailureDialog = true,
   platform = process.platform,
 }) {
   if (platform === "win32") {
@@ -1505,6 +1552,7 @@ async function productionRestartDetached({
     nodePath: preflight.nodePath,
     helperPath: join(repositoryRoot, "src", "lifecycle-helper.mjs"),
     actionPath,
+    showFailureDialog,
   });
 }
 

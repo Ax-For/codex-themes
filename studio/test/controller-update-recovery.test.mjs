@@ -11,7 +11,12 @@ const nativeProcess = {
   startedAt: "2026-07-31T10:00:00.000Z",
 };
 
-function recoveryController({ now, restartIntoCdp }) {
+function recoveryController({
+  now,
+  restartIntoCdp,
+  launchIntoCdp,
+  probeNativeProcess = async () => nativeProcess,
+}) {
   const state = {
     persistenceEnabled: true,
     revision: 3,
@@ -30,8 +35,9 @@ function recoveryController({ now, restartIntoCdp }) {
     clearJournal: async () => {},
     recoverTransition: async () => ({ state, recovered: false }),
     probeCurrentProcess: async () => null,
-    probeNativeProcess: async () => nativeProcess,
+    probeNativeProcess,
     restartIntoCdp,
+    launchIntoCdp,
     validatePortOwner: async () => false,
     injectSkin: async () => {},
     removeSkin: async () => {},
@@ -44,6 +50,34 @@ function recoveryController({ now, restartIntoCdp }) {
     now,
   });
 }
+
+test("background controller proactively launches Codex with CDP when login starts with no app process", async () => {
+  let clock = 1_000_000;
+  let launchCalls = 0;
+  const controller = recoveryController({
+    now: () => clock,
+    probeNativeProcess: async () => null,
+    restartIntoCdp: async () => {
+      throw new Error("native restart must not run when Codex is closed");
+    },
+    launchIntoCdp: async () => {
+      launchCalls += 1;
+      return { queued: true };
+    },
+  });
+
+  assert.equal((await controller.start()).action, "launch");
+  assert.equal(launchCalls, 1);
+
+  clock += 44_999;
+  assert.equal((await controller.tick()).action, "wait-for-app");
+  assert.equal(launchCalls, 1);
+
+  clock += 1;
+  assert.equal((await controller.tick()).action, "launch");
+  assert.equal(launchCalls, 2);
+  await controller.stop();
+});
 
 test("background controller retries the same native Codex after a detached upgrade restart stalls", async () => {
   let clock = 1_000_000;

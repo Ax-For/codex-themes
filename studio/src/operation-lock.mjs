@@ -519,6 +519,19 @@ function claimBinding(claim) {
   };
 }
 
+function persistedClaimBindingMatches(binding, claim, { nonce = true } = {}) {
+  // macOS assigns APFS device numbers at mount time, so st_dev can change
+  // after a reboot even though the private file and its inode are unchanged.
+  // Keep dev in the persisted schema for diagnostics, but bind ownership to
+  // the random claim nonce plus inode (or the enclosing record's nonce plus
+  // inode for release/heartbeat records). Both files live in the same trusted
+  // real state directory, making the device number redundant for identity.
+  return (
+    binding.ino === String(claim.metadata.ino) &&
+    (!nonce || binding.nonce === claim.owner.nonce)
+  );
+}
+
 function sameClaim(left, right) {
   return (
     left.raw === right.raw &&
@@ -755,14 +768,11 @@ async function readClaim(path, { allowMissing = false, predecessor = undefined }
   if (record === null) return null;
   const owner = validateOwnerRecord(record.value);
   if (predecessor !== undefined) {
-    const expected = predecessor === null ? null : claimBinding(predecessor);
     const matches =
       owner.predecessor === null
-        ? expected === null
-        : expected !== null &&
-          owner.predecessor.dev === expected.dev &&
-          owner.predecessor.ino === expected.ino &&
-          owner.predecessor.nonce === expected.nonce;
+        ? predecessor === null
+        : predecessor !== null &&
+          persistedClaimBindingMatches(owner.predecessor, predecessor);
     if (!matches) {
       throw lockError(
         "LOCK_CHAIN_CORRUPT",
@@ -821,8 +831,7 @@ function validateReleaseRecord(value, claim) {
     typeof value.claim !== "object" ||
     Array.isArray(value.claim) ||
     !exactKeys(value.claim, ["dev", "ino"]) ||
-    value.claim.dev !== String(claim.metadata.dev) ||
-    value.claim.ino !== String(claim.metadata.ino)
+    !persistedClaimBindingMatches(value.claim, claim, { nonce: false })
   ) {
     throw lockError(code, "release marker is not bound to its owner claim");
   }
@@ -1632,8 +1641,7 @@ function heartbeatMatchesClaim(heartbeat, claim) {
     heartbeat.nonce === claim.owner.nonce &&
     heartbeat.pid === claim.owner.pid &&
     heartbeat.startedAt === claim.owner.startedAt &&
-    heartbeat.claim.dev === String(claim.metadata.dev) &&
-    heartbeat.claim.ino === String(claim.metadata.ino)
+    persistedClaimBindingMatches(heartbeat.claim, claim, { nonce: false })
   );
 }
 
