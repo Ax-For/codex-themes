@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import {
   readLifecycleProcessIdentity,
@@ -28,11 +30,13 @@ test("background lifecycle recovery suppresses its failure dialog", async () => 
   const child = new EventEmitter();
   child.pid = 4321;
   child.unref = () => {};
+  const actionPath = join(tmpdir(), "codex-themes-action.json");
+  const helperPath = join(tmpdir(), "lifecycle-helper.mjs");
 
   const queued = spawnDetachedLifecycle({
-    actionPath: "/tmp/codex-themes-action.json",
-    helperPath: "/tmp/lifecycle-helper.mjs",
-    nodePath: "/tmp/node",
+    actionPath,
+    helperPath,
+    nodePath: process.execPath,
     showFailureDialog: false,
     spawnImpl: (command, args, options) => {
       invocation = { command, args, options };
@@ -43,19 +47,20 @@ test("background lifecycle recovery suppresses its failure dialog", async () => 
 
   assert.deepEqual(await queued, { queued: true });
   assert.deepEqual(invocation.args, [
-    "/tmp/lifecycle-helper.mjs",
-    "/tmp/codex-themes-action.json",
+    helperPath,
+    actionPath,
     "--no-dialog",
   ]);
 });
 
 test("normal quit targets the exact Codex app through a quit Apple event", async () => {
   let invocation;
-  const appPath = "/Applications/ChatGPT.app";
+  const appPath = join(tmpdir(), "ChatGPT.app");
+  const executablePath = join(appPath, "Contents", "MacOS", "ChatGPT");
   await requestNormalQuit({
     appPath,
     process: {
-      executablePath: `${appPath}/Contents/MacOS/ChatGPT`,
+      executablePath,
       pid: 10182,
       startedAt: "Sat Aug 1 10:21:57 2026",
     },

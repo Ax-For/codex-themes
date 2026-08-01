@@ -1,11 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import { launchMacCodexWithCdp } from "../src/cli.mjs";
 
+const appPath = join(tmpdir(), "ChatGPT.app");
 const app = {
-  appPath: "/Applications/ChatGPT.app",
-  executablePath: "/Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+  appPath,
+  executablePath: join(appPath, "Contents", "MacOS", "ChatGPT"),
 };
 
 test("macOS login prelaunch starts the exact Codex app with loopback CDP arguments", async () => {
@@ -22,7 +25,7 @@ test("macOS login prelaunch starts the exact Codex app with loopback CDP argumen
     "/usr/bin/open",
     [
       "-a",
-      "/Applications/ChatGPT.app",
+      appPath,
       "--args",
       "--remote-debugging-address=127.0.0.1",
       "--remote-debugging-port=9341",

@@ -30,7 +30,9 @@ function lockOptions(stateRoot, identity, operation) {
   };
 }
 
-test("macOS operation lock survives device-number changes across reboot", async (t) => {
+test("macOS operation lock survives device-number changes across reboot", {
+  skip: process.platform !== "darwin" ? "requires macOS POSIX file identity semantics" : false,
+}, async (t) => {
   const temporaryRoot = await realpath(tmpdir());
   const stateRoot = await mkdtemp(join(temporaryRoot, "codex-themes-lock-reboot-"));
   t.after(() => rm(stateRoot, { force: true, recursive: true }));
@@ -70,7 +72,9 @@ test("macOS operation lock survives device-number changes across reboot", async 
   assert.equal(await recovered.release(), true);
 });
 
-test("macOS operation lock still rejects a successor with the wrong nonce", async (t) => {
+test("macOS operation lock still rejects a successor with the wrong nonce", {
+  skip: process.platform !== "darwin" ? "requires macOS POSIX file identity semantics" : false,
+}, async (t) => {
   const temporaryRoot = await realpath(tmpdir());
   const stateRoot = await mkdtemp(join(temporaryRoot, "codex-themes-lock-tamper-"));
   t.after(() => rm(stateRoot, { force: true, recursive: true }));
