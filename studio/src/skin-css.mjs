@@ -1479,6 +1479,10 @@ function buildVariantCss(id, heroDataUrl) {
   color: #58748a !important;
 }
 
+:root[data-codex-themes-skin="xp-qq"] button[data-codex-intelligence-trigger="true"] :where([data-tooltip-overflow-target="true"], [class*="_ModelPickerTrigger"]) {
+  color: #20364a !important;
+}
+
 :root[data-codex-themes-skin="xp-qq"] [data-composer-surface-variant="default"] [class*="bg-primary-solid"] {
   color: #fff !important;
   background: linear-gradient(180deg, #4a91cc, #246fab) !important;

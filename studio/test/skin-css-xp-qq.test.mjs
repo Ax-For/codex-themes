@@ -236,6 +236,10 @@ test("XP QQ CSS isolates document, file, diff, settings and terminal surfaces", 
   );
   assert.match(
     css,
+    /button\[data-codex-intelligence-trigger="true"\] :where\(\[data-tooltip-overflow-target="true"\], \[class\*="_ModelPickerTrigger"\]\) \{[^}]*color: #20364a !important;/s,
+  );
+  assert.match(
+    css,
     /\[data-tab-id\^="file:"\] \{[^}]*background: var\(--qq-panel\) !important;/s,
   );
   assert.match(css, /diffs-container \{[^}]*background-color: var\(--qq-panel\) !important;/s);
