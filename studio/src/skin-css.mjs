@@ -946,6 +946,37 @@ function buildVariantCss(id, heroDataUrl) {
   backdrop-filter: none !important;
 }
 
+/* Codex summary/resource panels are mounted through a portal and may use the
+ * newer elevated surface tokens even while the rest of the shell is light. */
+:root[data-codex-themes-skin="xp-qq"] [class*="bg-surface-elevated-secondary"] {
+  color-scheme: light !important;
+  color: #29475f !important;
+  border: 1px solid #9fbed5 !important;
+  background: #f8fbfe !important;
+  box-shadow: 1px 3px 10px rgba(35, 73, 101, .20), inset 0 1px #fff !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [class*="before:bg-surface-elevated-secondary"]::before {
+  background: #f8fbfe !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [class*="bg-surface-elevated-secondary"] :where(header, h1, h2, h3, p, span, button, a, svg) {
+  color: #29475f !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [class*="bg-surface-elevated-secondary"] :where([class*="text-tertiary"], [class*="text-secondary"], [class*="text-text/40"]) {
+  color: #6f8394 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [class*="bg-surface-elevated-secondary"] [data-slot="thread-summary-panel-item-button"] {
+  color: #29475f !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [class*="bg-surface-elevated-secondary"] [data-slot="thread-summary-panel-item-button"]:hover::before {
+  background: #e4f1fa !important;
+}
+
 /* Attachments and turn diffs are useful controls, not dark floating cards. */
 :root[data-codex-themes-skin="xp-qq"] main [class*="bg-token-dropdown-background/50"] {
   color: var(--qq-ink) !important;
@@ -1423,6 +1454,34 @@ function buildVariantCss(id, heroDataUrl) {
   background: #fff !important;
   box-shadow: inset 1px 1px #e3edf5, 0 2px 5px rgba(42, 83, 114, .10) !important;
   backdrop-filter: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-composer-surface-variant="default"] {
+  color-scheme: light !important;
+  color: #20364a !important;
+  border: 1px solid #8fb3cf !important;
+  border-radius: 5px !important;
+  background: #fff !important;
+  box-shadow: inset 1px 1px #e3edf5, 0 2px 5px rgba(42, 83, 114, .10) !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-codex-composer-root] [data-codex-composer="true"] {
+  color: #20364a !important;
+  caret-color: #155d9f !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-codex-composer-root] [data-codex-composer="true"]::before {
+  color: #7d91a1 !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-composer-surface-variant="default"] [class*="text-tertiary"] {
+  color: #58748a !important;
+}
+
+:root[data-codex-themes-skin="xp-qq"] [data-composer-surface-variant="default"] [class*="bg-primary-solid"] {
+  color: #fff !important;
+  background: linear-gradient(180deg, #4a91cc, #246fab) !important;
 }
 
 :root[data-codex-themes-skin="xp-qq"] .composer-surface-chrome [data-codex-composer="true"] {

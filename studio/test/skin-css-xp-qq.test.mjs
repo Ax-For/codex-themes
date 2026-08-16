@@ -220,6 +220,22 @@ test("XP QQ CSS isolates document, file, diff, settings and terminal surfaces", 
   );
   assert.match(
     css,
+    /\[class\*="bg-surface-elevated-secondary"\] \{[^}]*background: #f8fbfe !important;[^}]*backdrop-filter: none !important;/s,
+  );
+  assert.match(
+    css,
+    /\[class\*="before:bg-surface-elevated-secondary"\]::before \{[^}]*background: #f8fbfe !important;/s,
+  );
+  assert.match(
+    css,
+    /\[data-composer-surface-variant="default"\] \{[^}]*border-radius: 5px !important;[^}]*background: #fff !important;/s,
+  );
+  assert.match(
+    css,
+    /\[data-codex-composer-root\] \[data-codex-composer="true"\] \{[^}]*color: #20364a !important;[^}]*caret-color: #155d9f !important;/s,
+  );
+  assert.match(
+    css,
     /\[data-tab-id\^="file:"\] \{[^}]*background: var\(--qq-panel\) !important;/s,
   );
   assert.match(css, /diffs-container \{[^}]*background-color: var\(--qq-panel\) !important;/s);
